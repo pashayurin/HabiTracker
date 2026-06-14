@@ -2,19 +2,42 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HabiTracker</title>
-    <style>
-        body {
-            background: #1a1a2e;
-            color: white;
-            font-family: Arial;
-            text-align: center;
-            padding: 50px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>🎯 HabiTracker</h1>
-    <p>Приложение работает!</p>
+
+    <!-- ШАПКА СВЕРХУ -->
+    <header class="top-bar">
+        <h1 class="app-title">HabiTracker</h1>
+    </header>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="content">
+        <button class="add-habit-btn">+ Добавить новую привычку</button>
+        
+        <!-- Здесь будут привычки -->
+        <div class="habits-list" id="habitsList">
+        </div>
+    </main>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+    <nav class="bottom-bar">
+        <div class="nav-item active" onclick="showPage('home')">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Главная</span>
+        </div>
+        <div class="nav-item" onclick="showPage('profile')">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Профиль</span>
+        </div>
+        <div class="nav-item" onclick="showPage('help')">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">Помощь</span>
+        </div>
+    </nav>
+
+    <script src="script.js"></script>
 </body>
 </html>
