@@ -1,26 +1,28 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+const tg = window.Telegram?.WebApp;
+if (tg) tg.expand();
 
 // ===== ИКОНКИ =====
 const icons = [
-    'A','B','C','D','E','F','G','H','I','J','K','L','M',
-    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-    '🏃','💪','📚','✏️','🎯','💧','🧘','🎵','🍎','😴',
-    '🚴','🏊','🧠','❤️','⭐','🔥','🌟','💡','🎨','🏋️'
+    '😊','😎','🥳','😴','🤩','💪','🏃','🚴','🏊','🧘',
+    '📚','✏️','🎯','💧','🎵','🍎','🥗','🔥','⭐','🌟',
+    '💡','🎨','🏋️','❤️','🧠','🎸','🌿','☀️','🌙','⚡',
+    'A','B','C','D','E','F','G','H','I','J',
+    'K','L','M','N','O','P','Q','R','S','T'
 ];
 
-let selectedIconValue = 'A';
+let selectedIconValue = '😊';
 let reminderOn = false;
 let iconPickerOpen = false;
 
-// Заполняем дни и годы
-window.onload = function() {
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+window.onload = function () {
+
     // Дни
     const daySelect = document.getElementById('startDay');
     for (let i = 1; i <= 31; i++) {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = i;
+        opt.textContent = i < 10 ? '0' + i : i;
         daySelect.appendChild(opt);
     }
 
@@ -34,24 +36,33 @@ window.onload = function() {
         yearSelect.appendChild(opt);
     }
 
-    // Устанавливаем текущую дату
+    // Текущая дата
     const now = new Date();
     document.getElementById('startDay').value = now.getDate();
     document.getElementById('startMonth').value = now.getMonth() + 1;
     document.getElementById('startYear').value = now.getFullYear();
 
-    // Заполняем пикер иконок
+    // Пикер иконок
     const grid = document.getElementById('iconGrid');
     icons.forEach(icon => {
         const btn = document.createElement('button');
         btn.className = 'icon-option';
         btn.textContent = icon;
-        btn.onclick = function() {
+        btn.onclick = function () {
             selectedIconValue = icon;
             document.getElementById('selectedIcon').textContent = icon;
             closeIconPicker();
         };
         grid.appendChild(btn);
+    });
+
+    // Запрет масштабирования жестами
+    document.addEventListener('touchmove', function (e) {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
     });
 };
 
@@ -74,10 +85,10 @@ function closeModalOutside(event) {
 
 function resetModal() {
     document.getElementById('habitName').value = '';
-    document.getElementById('habitCount').value = '';
-    document.getElementById('habitUnit').value = 'мин';
-    selectedIconValue = 'A';
-    document.getElementById('selectedIcon').textContent = 'A';
+    document.getElementById('habitCount').value = '1';
+    document.getElementById('habitUnit').value = 'раз';
+    selectedIconValue = '😊';
+    document.getElementById('selectedIcon').textContent = '😊';
     reminderOn = false;
     document.getElementById('reminderToggle').classList.remove('on');
     document.getElementById('toggleLabel').textContent = 'нет';
@@ -93,11 +104,7 @@ function resetModal() {
 function openIconPicker() {
     iconPickerOpen = !iconPickerOpen;
     const picker = document.getElementById('iconPicker');
-    if (iconPickerOpen) {
-        picker.classList.add('open');
-    } else {
-        picker.classList.remove('open');
-    }
+    picker.classList.toggle('open', iconPickerOpen);
 }
 
 function closeIconPicker() {
@@ -113,31 +120,18 @@ function toggleDay(btn) {
 function toggleAllDays(btn) {
     const dayBtns = document.querySelectorAll('.day-btn:not(.day-btn-all)');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
-    dayBtns.forEach(b => {
-        if (allActive) {
-            b.classList.remove('active');
-        } else {
-            b.classList.add('active');
-        }
-    });
+    dayBtns.forEach(b => b.classList.toggle('active', !allActive));
     btn.classList.toggle('active', !allActive);
 }
 
 // ===== НАПОМИНАНИЯ =====
 function toggleReminder() {
     reminderOn = !reminderOn;
-    const toggle = document.getElementById('reminderToggle');
-    const label = document.getElementById('toggleLabel');
-    if (reminderOn) {
-        toggle.classList.add('on');
-        label.textContent = 'да';
-    } else {
-        toggle.classList.remove('on');
-        label.textContent = 'нет';
-    }
+    document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
+    document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
 }
 
-// ===== СОХРАНИТЬ =====
+// ===== СОХРАНИТЬ ПРИВЫЧКУ =====
 function saveHabit() {
     const name = document.getElementById('habitName').value.trim();
     if (!name) {
@@ -145,42 +139,66 @@ function saveHabit() {
         return;
     }
 
-    const count = document.getElementById('habitCount').value || '—';
+    const goal = parseInt(document.getElementById('habitCount').value) || 1;
     const unit = document.getElementById('habitUnit').value;
-    const day = document.getElementById('startDay').value;
-    const month = document.getElementById('startMonth').value;
-    const year = document.getElementById('startYear').value;
-
-    const selectedDays = [...document.querySelectorAll('.day-btn:not(.day-btn-all).active')]
-        .map(b => b.dataset.day).join(', ') || 'не выбраны';
-
-    const reminder = reminderOn ? 'да' : 'нет';
     const icon = selectedIconValue;
 
-    // Создаём карточку привычки
+    // Уникальный ID
+    const id = Date.now();
+
+    // Создаём карточку
     const habitsList = document.getElementById('habitsList');
     const card = document.createElement('div');
     card.className = 'habit-card';
+    card.dataset.id = id;
+    card.dataset.goal = goal;
+    card.dataset.current = 0;
+    card.dataset.unit = unit;
+
     card.innerHTML = `
-        <div class="habit-card-left">
-            <div class="habit-icon-small">${icon}</div>
-            <div class="habit-info">
-                <div class="habit-card-name">${name}</div>
-                <div class="habit-card-detail">${count} ${unit} · ${selectedDays}</div>
-                <div class="habit-card-detail">с ${day}.${String(month).padStart(2,'0')}.${year} · напом: ${reminder}</div>
+        <div class="habit-icon-circle">${icon}</div>
+        <div class="habit-body">
+            <div class="habit-card-name">${name}</div>
+            <div class="habit-progress-wrap">
+                <div class="habit-progress-bar">
+                    <div class="habit-progress-fill" id="fill-${id}" style="width:0%"></div>
+                    <span class="habit-progress-text" id="text-${id}">0 / ${goal} ${unit}</span>
+                </div>
             </div>
         </div>
+        <button class="habit-plus-btn" onclick="incrementHabit(${id})">+</button>
     `;
-    habitsList.appendChild(card);
 
+    habitsList.appendChild(card);
     closeModal();
 }
 
+// ===== УВЕЛИЧИТЬ СЧЁТЧИК =====
+function incrementHabit(id) {
+    const card = document.querySelector(`.habit-card[data-id="${id}"]`);
+    let current = parseInt(card.dataset.current);
+    const goal = parseInt(card.dataset.goal);
+    const unit = card.dataset.unit;
+
+    if (current >= goal) return; // уже выполнено
+
+    current++;
+    card.dataset.current = current;
+
+    const percent = Math.min((current / goal) * 100, 100);
+    document.getElementById(`fill-${id}`).style.width = percent + '%';
+    document.getElementById(`text-${id}`).textContent = `${current} / ${goal} ${unit}`;
+
+    // Если выполнено — подсветить
+    if (current >= goal) {
+        card.classList.add('completed');
+        document.getElementById(`fill-${id}`).style.background = '#4CAF50';
+    }
+}
+
 // ===== НАВИГАЦИЯ =====
-function showPage(page) {
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    event.currentTarget.classList.add('active');
-    console.log("Открыта вкладка: " + page);
+function showPage(page, el) {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
+    console.log('Открыта вкладка: ' + page);
 }
