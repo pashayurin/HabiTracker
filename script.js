@@ -11,8 +11,11 @@ const icons = [
     'K','L','M','N','O','P','Q','R','S','T'
 ];
 
+// ===== МАППИНГ: JS getDay() -> сокращение =====
+// 0=Вс,1=Пн,2=Вт,3=Ср,4=Чт,5=Пт,6=Сб
+const JS_DAY_TO_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+
 // ===== ДАТА =====
-// Смещение в днях от сегодня (0 = сегодня, -1 = вчера, +1 = завтра)
 let dayOffset = 0;
 
 const DAYS_RU = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
@@ -21,7 +24,6 @@ const MONTHS_RU = [
     'июля','августа','сентября','октября','ноября','декабря'
 ];
 
-// Возвращает Date для текущего выбранного дня
 function getSelectedDate() {
     const d = new Date();
     d.setDate(d.getDate() + dayOffset);
@@ -29,12 +31,10 @@ function getSelectedDate() {
     return d;
 }
 
-// Ключ для localStorage по дате
 function dateKey(date) {
-    return date.toISOString().slice(0,10); // "YYYY-MM-DD"
+    return date.toISOString().slice(0,10);
 }
 
-// Обновляет дату в шапке
 function updateDateDisplay() {
     const d = getSelectedDate();
     document.getElementById('dateNavDay').textContent = DAYS_RU[d.getDay()];
@@ -42,7 +42,6 @@ function updateDateDisplay() {
         d.getDate() + ' ' + MONTHS_RU[d.getMonth()] + ' ' + d.getFullYear();
 }
 
-// Переключение дня
 function changeDay(delta) {
     dayOffset += delta;
     updateDateDisplay();
@@ -50,9 +49,6 @@ function changeDay(delta) {
 }
 
 // ===== ХРАНИЛИЩЕ =====
-// habits = массив объектов { id, name, icon, goal, unit }
-// progress = { "YYYY-MM-DD": { habitId: currentCount, ... } }
-
 function loadHabits() {
     return JSON.parse(localStorage.getItem('habits') || '[]');
 }
@@ -69,22 +65,76 @@ function saveProgress(progress) {
     localStorage.setItem('progress', JSON.stringify(progress));
 }
 
+// ===== ФИЛЬТР ПО ДНЮ НЕДЕЛИ =====
+// Возвращает только те привычки, у которых текущий день недели входит в список days
+function getHabitsForDate(date) {
+    const habits = loadHabits();
+    const ruDay = JS_DAY_TO_RU[date.getDay()]; // например "СР"
+    return habits.filter(h => {
+        // Если days не задан или пустой — показываем всегда (обратная совместимость)
+        if (!h.days || h.days.length === 0) return true;
+        return h.days.includes(ruDay);
+    });
+}
+
+// ===== ОБНОВИТЬ ОБЩУЮ ШКАЛУ ПРОГРЕССА =====
+function updateDailyProgress(habitsForDay, dayProgress) {
+    const block = document.getElementById('dailyProgressBlock');
+    const percentEl = document.getElementById('dailyProgressPercent');
+    const fillEl = document.getElementById('dailyProgressFill');
+    const subEl = document.getElementById('dailyProgressSub');
+
+    if (habitsForDay.length === 0) {
+        block.style.display = 'none';
+        return;
+    }
+
+    block.style.display = 'block';
+
+    let completed = 0;
+    habitsForDay.forEach(h => {
+        const cur = dayProgress[h.id] || 0;
+        if (cur >= h.goal) completed++;
+    });
+
+    const total = habitsForDay.length;
+    const pct = Math.round((completed / total) * 100);
+
+    percentEl.textContent = pct + '%';
+    fillEl.style.width = pct + '%';
+
+    // Цвет шкалы в зависимости от процента
+    if (pct >= 100) {
+        fillEl.style.background = 'linear-gradient(90deg, #4CAF50, #81C784)';
+    } else if (pct >= 50) {
+        fillEl.style.background = 'linear-gradient(90deg, #FF9800, #FFB74D)';
+    } else {
+        fillEl.style.background = 'linear-gradient(90deg, #F44336, #EF9A9A)';
+    }
+
+    subEl.textContent = completed + ' из ' + total + ' привычек выполнено';
+}
+
 // ===== ОТРИСОВКА ПРИВЫЧЕК =====
 function renderHabits() {
-    const habits = loadHabits();
+    const date = getSelectedDate();
+    const habitsForDay = getHabitsForDate(date);
     const progress = loadProgress();
-    const key = dateKey(getSelectedDate());
+    const key = dateKey(date);
     const dayProgress = progress[key] || {};
 
     const list = document.getElementById('habitsList');
     list.innerHTML = '';
 
-    if (habits.length === 0) {
-        list.innerHTML = '<p class="empty-msg">Нет привычек. Добавьте первую!</p>';
+    // Обновить общую шкалу
+    updateDailyProgress(habitsForDay, dayProgress);
+
+    if (habitsForDay.length === 0) {
+        list.innerHTML = '<p class="empty-msg">Нет привычек на этот день 🙌</p>';
         return;
     }
 
-    habits.forEach(habit => {
+    habitsForDay.forEach(habit => {
         const current = dayProgress[habit.id] || 0;
         const percent = Math.min((current / habit.goal) * 100, 100);
         const done = current >= habit.goal;
@@ -101,7 +151,7 @@ function renderHabits() {
                     <div class="habit-progress-bar">
                         <div class="habit-progress-fill"
                              id="fill-${habit.id}"
-                             style="width:${percent}%${done ? ';background:#4CAF50' : ''}">
+                             style="width:${percent}%${done ? ';background:linear-gradient(90deg,#4CAF50,#81C784)' : ''}">
                         </div>
                         <span class="habit-progress-text" id="text-${habit.id}">
                             ${current} / ${habit.goal} ${habit.unit}
@@ -109,7 +159,9 @@ function renderHabits() {
                     </div>
                 </div>
             </div>
-            <button class="habit-plus-btn" onclick="incrementHabit(${habit.id})">+</button>
+            <button class="habit-plus-btn${done ? ' done' : ''}" onclick="incrementHabit(${habit.id})">
+                ${done ? '✓' : '+'}
+            </button>
             <button class="habit-del-btn" onclick="deleteHabit(${habit.id})">✕</button>
         `;
 
@@ -171,8 +223,9 @@ function resetModal() {
     document.getElementById('selectedIcon').textContent = '😊';
     reminderOn = false;
     document.getElementById('reminderToggle').classList.remove('on');
-    document.getElementById('toggleLabel').textContent = 'нет';
+    document.getElementById('toggleLabel').textContent = 'Выключено';
     document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.day-btn-all')?.classList.remove('active');
 
     const now = new Date();
     document.getElementById('startDay').value = now.getDate();
@@ -197,7 +250,7 @@ function toggleDay(btn) {
 }
 
 function toggleAllDays(btn) {
-    const dayBtns = document.querySelectorAll('.day-btn:not(.day-btn-all)');
+    const dayBtns = document.querySelectorAll('.day-btn');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
     dayBtns.forEach(b => b.classList.toggle('active', !allActive));
     btn.classList.toggle('active', !allActive);
@@ -207,7 +260,7 @@ function toggleAllDays(btn) {
 function toggleReminder() {
     reminderOn = !reminderOn;
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
-    document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
+    document.getElementById('toggleLabel').textContent = reminderOn ? 'Включено' : 'Выключено';
 }
 
 // ===== СОХРАНИТЬ ПРИВЫЧКУ =====
@@ -223,8 +276,14 @@ function saveHabit() {
     const icon = selectedIconValue;
     const id   = Date.now();
 
+    // Собираем выбранные дни
+    const days = [];
+    document.querySelectorAll('.day-btn.active').forEach(b => {
+        days.push(b.dataset.day);
+    });
+
     const habits = loadHabits();
-    habits.push({ id, name, icon, goal, unit });
+    habits.push({ id, name, icon, goal, unit, days });
     saveHabits(habits);
 
     closeModal();
@@ -235,12 +294,10 @@ function saveHabit() {
 function showPage(page) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.getElementById('nav-' + page)?.classList.add('active');
-    // Здесь можно добавить показ/скрытие секций
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function () {
-
     // Заполнить дни
     const daySelect = document.getElementById('startDay');
     for (let i = 1; i <= 31; i++) {
@@ -260,7 +317,7 @@ window.onload = function () {
         yearSelect.appendChild(opt);
     }
 
-    // Текущая дата в селектах
+    // Текущая дата
     const now = new Date();
     document.getElementById('startDay').value   = now.getDate();
     document.getElementById('startMonth').value = now.getMonth() + 1;
@@ -280,13 +337,9 @@ window.onload = function () {
         grid.appendChild(btn);
     });
 
-    // Показать дату в шапке
     updateDateDisplay();
-
-    // Загрузить привычки
     renderHabits();
 
-    // Запрет масштабирования
     document.addEventListener('touchmove', e => {
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
