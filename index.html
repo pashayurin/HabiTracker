@@ -11,15 +11,20 @@
 <!-- МОДАЛКА ДОБАВЛЕНИЯ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal-box">
-    <h2 class="modal-title">Добавить привычку</h2>
+
+    <div class="modal-header">
+      <h2 class="modal-title">Добавить привычку</h2>
+      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+    </div>
 
     <!-- Иконка + название -->
     <div class="modal-top-row">
       <div class="icon-circle" id="iconCircle" onclick="openIconPicker()">
         <span id="selectedIcon">😊</span>
+        <span class="icon-circle-hint">▾</span>
       </div>
       <input type="text" class="habit-name-input" id="habitName"
-        placeholder="название привычки" maxlength="30">
+        placeholder="Название привычки" maxlength="30">
     </div>
 
     <!-- Пикер иконок -->
@@ -30,17 +35,15 @@
     <!-- Блок настроек -->
     <div class="settings-block">
 
-      <!-- Количество в день -->
       <div class="modal-row">
-        <span class="modal-row-label">количество в день</span>
+        <span class="modal-row-label">Количество в день</span>
         <input type="number" class="modal-small-input" id="habitCount"
           value="1" min="1" max="999">
       </div>
       <div class="row-divider"></div>
 
-      <!-- Единица измерения -->
       <div class="modal-row">
-        <span class="modal-row-label">единица измерения</span>
+        <span class="modal-row-label">Единица измерения</span>
         <select class="modal-select" id="habitUnit">
           <option value="раз">РАЗ</option>
           <option value="мин">МИН</option>
@@ -52,9 +55,8 @@
       </div>
       <div class="row-divider"></div>
 
-      <!-- Дата начала -->
       <div class="modal-row">
-        <span class="modal-row-label">дата начала</span>
+        <span class="modal-row-label">Дата начала</span>
         <div class="date-selects">
           <select class="modal-select-sm" id="startDay"></select>
           <select class="modal-select-sm" id="startMonth">
@@ -76,9 +78,8 @@
       </div>
       <div class="row-divider"></div>
 
-      <!-- Дни недели -->
       <div class="modal-section">
-        <span class="modal-row-label">по каким дням недели</span>
+        <span class="modal-row-label">По каким дням недели</span>
         <div class="days-row">
           <button class="day-btn" data-day="ПН" onclick="toggleDay(this)">ПН</button>
           <button class="day-btn" data-day="ВТ" onclick="toggleDay(this)">ВТ</button>
@@ -92,11 +93,10 @@
       </div>
       <div class="row-divider"></div>
 
-      <!-- Напоминания -->
       <div class="modal-row">
-        <span class="modal-row-label">напоминания</span>
+        <span class="modal-row-label">Напоминания</span>
         <div class="reminder-row">
-          <span class="reminder-label" id="toggleLabel">нет</span>
+          <span class="reminder-label" id="toggleLabel">Нет</span>
           <div class="toggle-switch" id="reminderToggle" onclick="toggleReminder()">
             <div class="toggle-thumb"></div>
           </div>
@@ -110,6 +110,7 @@
       <button class="btn-cancel" onclick="closeModal()">Отмена</button>
       <button class="btn-save" onclick="saveHabit()">Сохранить</button>
     </div>
+
   </div>
 </div>
 
@@ -128,6 +129,7 @@
 
 <!-- ОСНОВНОЙ КОНТЕНТ -->
 <main class="content">
+
   <!-- Прогресс дня -->
   <div class="day-progress-block">
     <div class="day-progress-header">
@@ -140,9 +142,12 @@
     <div class="day-progress-sub" id="dayProgressSub">0 из 0 привычек выполнено</div>
   </div>
 
+  <!-- Кнопка добавить -->
   <button class="add-habit-btn" onclick="openModal()">
-    <span class="add-habit-plus">+</span> Добавить новую привычку
+    <span class="add-habit-icon">＋</span>
+    <span>Добавить новую привычку</span>
   </button>
+
   <div class="habits-list" id="habitsList"></div>
 </main>
 
