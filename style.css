@@ -9,10 +9,10 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: #f0f2f5;
-    color: #1a1a1a;
-    padding-top: 95px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #f0f2f8;
+    color: #1a1a2e;
+    padding-top: 100px;
     padding-bottom: 75px;
     touch-action: pan-x pan-y;
 }
@@ -26,21 +26,23 @@ input, textarea, select {
 .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    background: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     z-index: 1000;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px 16px 8px;
-    gap: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 12px 16px 10px;
+    gap: 8px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.3);
 }
 
 .app-title {
-    font-size: 22px;
-    font-weight: bold;
+    font-size: 24px;
+    font-weight: 800;
     font-style: italic;
+    color: #ffffff;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(102,126,234,0.5);
 }
 
 /* ===== НАВИГАЦИЯ ПО ДНЯМ ===== */
@@ -48,121 +50,149 @@ input, textarea, select {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
 }
 
 .date-nav-btn {
-    width: 32px;
-    height: 32px;
-    border: 2px solid #000;
+    width: 34px;
+    height: 34px;
+    border: 2px solid rgba(255,255,255,0.3);
     border-radius: 50%;
-    background: #fff;
-    font-size: 20px;
+    background: rgba(255,255,255,0.1);
+    font-size: 22px;
+    line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    transition: all 0.15s;
     flex-shrink: 0;
-    transition: background 0.15s;
+    font-weight: bold;
+    color: #ffffff;
 }
 
-.date-nav-btn:active { background: #f0f0f0; }
+.date-nav-btn:active {
+    background: rgba(255,255,255,0.25);
+    transform: scale(0.92);
+}
 
 .date-nav-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 180px;
+    min-width: 190px;
 }
 
-.date-nav-day { font-size: 15px; font-weight: bold; }
-.date-nav-full { font-size: 13px; color: #555; font-style: italic; }
+.date-nav-day {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.date-nav-full {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    font-style: italic;
+}
 
 /* ===== КОНТЕНТ ===== */
 .content {
-    padding: 16px;
-    min-height: calc(100vh - 170px);
+    padding: 14px 14px;
+    min-height: calc(100vh - 175px);
+}
+
+/* ===== ДНЕВНОЙ ПРОГРЕСС-БАР ===== */
+.day-progress-block {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+
+.day-progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.day-progress-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 0.3px;
+}
+
+.day-progress-percent {
+    font-size: 20px;
+    font-weight: 800;
+    color: #667eea;
+}
+
+.day-progress-bar-wrap {
+    width: 100%;
+    height: 12px;
+    background: #e8ecf8;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.day-progress-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+
+.day-progress-sub {
+    font-size: 12px;
+    color: #888;
+    text-align: right;
 }
 
 /* ===== КНОПКА ДОБАВИТЬ ===== */
 .add-habit-btn {
     width: 100%;
-    padding: 14px;
+    padding: 15px 18px;
     font-size: 15px;
-    font-style: italic;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+    background: #ffffff;
+    border: 2px dashed #c5cae9;
+    border-radius: 16px;
     cursor: pointer;
     text-align: left;
-    color: #000;
+    color: #667eea;
     margin-bottom: 14px;
-}
-
-.add-habit-btn:active { opacity: 0.5; }
-
-/* ===== ОБЩАЯ ШКАЛА ПРОГРЕССА ===== */
-.daily-progress-block {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    border: 1px solid #e8e8e8;
-}
-
-.daily-progress-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 8px;
+    transition: all 0.18s;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.07);
 }
 
-.daily-progress-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
+.add-habit-plus {
+    font-size: 22px;
+    font-weight: 700;
+    color: #667eea;
+    line-height: 1;
 }
 
-.daily-progress-percent {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-}
-
-.daily-progress-bar-wrap {
-    width: 100%;
-    height: 14px;
-    background: #e8e8e8;
-    border-radius: 7px;
-    overflow: hidden;
-    margin-bottom: 6px;
-}
-
-.daily-progress-bar-fill {
-    height: 100%;
-    width: 0%;
-    border-radius: 7px;
-    background: linear-gradient(90deg, #F44336, #EF9A9A);
-    transition: width 0.5s ease, background 0.5s ease;
-}
-
-.daily-progress-sub {
-    font-size: 12px;
-    color: #888;
-    font-style: italic;
-    text-align: right;
+.add-habit-btn:active {
+    background: #f0f2ff;
+    border-color: #667eea;
+    transform: scale(0.98);
 }
 
 /* ===== ПУСТОЕ СООБЩЕНИЕ ===== */
 .empty-msg {
     text-align: center;
-    color: #888;
+    color: #aaa;
     font-style: italic;
     font-size: 15px;
-    padding: 30px 0;
+    padding: 40px 0;
 }
 
 /* ===== СПИСОК ПРИВЫЧЕК ===== */
@@ -177,21 +207,16 @@ input, textarea, select {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
+    padding: 14px 14px;
+    border-radius: 18px;
     background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    border: 1px solid #e8e8e8;
-    transition: box-shadow 0.2s;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    transition: all 0.2s;
 }
 
 .habit-card.completed {
-    border-color: #c8e6c9;
-    background: #f9fff9;
-}
-
-.habit-card.completed .habit-card-name {
-    color: #4CAF50;
+    background: #f6fff8;
+    box-shadow: 0 2px 12px rgba(67,233,123,0.1);
 }
 
 .habit-icon-circle {
@@ -199,46 +224,65 @@ input, textarea, select {
     height: 52px;
     min-width: 52px;
     border-radius: 50%;
-    border: 2px solid #e0e0e0;
+    border: 2.5px solid #e0e4f8;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    background: #f8f8f8;
+    background: #f4f6ff;
     flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.habit-icon-circle.done {
+    border-color: #43e97b;
+    background: #f0fff5;
 }
 
 .habit-body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
     min-width: 0;
 }
 
 .habit-card-name {
     font-size: 15px;
-    font-weight: bold;
+    font-weight: 700;
+    color: #1a1a2e;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.habit-card.completed .habit-card-name {
+    color: #2ecc71;
+}
+
+.habit-progress-wrap {
+    width: 100%;
+}
+
 .habit-progress-bar {
     position: relative;
     width: 100%;
-    height: 22px;
-    background: #eeeeee;
-    border-radius: 8px;
+    height: 20px;
+    background: #eef0f8;
+    border-radius: 10px;
     overflow: hidden;
 }
 
 .habit-progress-fill {
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    background: linear-gradient(90deg, #333, #555);
-    border-radius: 8px;
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 10px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+.habit-progress-fill.done {
+    background: linear-gradient(90deg, #43e97b, #38f9d7);
 }
 
 .habit-progress-text {
@@ -247,12 +291,13 @@ input, textarea, select {
     top: 50%;
     transform: translateY(-50%);
     text-align: center;
-    font-size: 11px;
-    font-style: italic;
-    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffffff;
     mix-blend-mode: difference;
     pointer-events: none;
     z-index: 1;
+    letter-spacing: 0.3px;
 }
 
 .habit-plus-btn {
@@ -260,32 +305,34 @@ input, textarea, select {
     height: 42px;
     min-width: 42px;
     border-radius: 50%;
-    border: 2px solid #333;
-    background: #fff;
-    font-size: 22px;
+    border: none;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    font-size: 24px;
     font-weight: bold;
+    color: #ffffff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
+    box-shadow: 0 3px 10px rgba(102,126,234,0.35);
 }
 
 .habit-plus-btn:active {
-    background: #f0f0f0;
-    transform: scale(0.93);
+    transform: scale(0.9);
+    box-shadow: 0 1px 5px rgba(102,126,234,0.2);
 }
 
 .habit-plus-btn.done {
-    border-color: #4CAF50;
-    color: #4CAF50;
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+    box-shadow: 0 3px 10px rgba(67,233,123,0.35);
     font-size: 18px;
 }
 
 .habit-del-btn {
-    width: 30px;
-    height: 30px;
-    min-width: 30px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
     border-radius: 50%;
-    border: 
+    border: 1.5px solid #e0e0e
