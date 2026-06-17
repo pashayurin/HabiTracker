@@ -65,24 +65,17 @@ function updateDayProgress() {
   const key = dateKey(getSelectedDate());
   const dayProgress = progress[key] || {};
 
-  if (habits.length === 0) {
-    document.getElementById('dayProgressPercent').textContent = '0%';
-    document.getElementById('dayProgressFill').style.width = '0%';
-    document.getElementById('dayProgressSub').textContent = '0 из 0 привычек выполнено';
-    return;
-  }
-
+  const total = habits.length;
   let done = 0;
   habits.forEach(h => {
-    const cur = dayProgress[h.id] || 0;
-    if (cur >= h.goal) done++;
+    if ((dayProgress[h.id] || 0) >= h.goal) done++;
   });
 
-  const pct = Math.round((done / habits.length) * 100);
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   document.getElementById('dayProgressPercent').textContent = pct + '%';
   document.getElementById('dayProgressFill').style.width = pct + '%';
   document.getElementById('dayProgressSub').textContent =
-    done + ' из ' + habits.length + ' привычек выполнено';
+    done + ' из ' + total + ' привычек выполнено';
 }
 
 // ===== ОТРИСОВКА ПРИВЫЧЕК =====
@@ -92,10 +85,10 @@ function renderHabits() {
   const key = dateKey(getSelectedDate());
   const dayProgress = progress[key] || {};
 
+  updateDayProgress();
+
   const list = document.getElementById('habitsList');
   list.innerHTML = '';
-
-  updateDayProgress();
 
   if (habits.length === 0) {
     list.innerHTML = '<p class="empty-msg">Нет привычек. Добавьте первую!</p>';
@@ -131,12 +124,11 @@ function renderHabits() {
         onclick="incrementHabit(${habit.id})">+</button>
       <button class="habit-del-btn" onclick="deleteHabit(${habit.id})">✕</button>
     `;
-
     list.appendChild(card);
   });
 }
 
-// ===== УВЕЛИЧИТЬ СЧЁТЧИК =====
+// ===== СЧЁТЧИК =====
 function incrementHabit(id) {
   const habits = loadHabits();
   const habit = habits.find(h => h.id === id);
@@ -154,7 +146,7 @@ function incrementHabit(id) {
   renderHabits();
 }
 
-// ===== УДАЛИТЬ ПРИВЫЧКУ =====
+// ===== УДАЛИТЬ =====
 function deleteHabit(id) {
   if (!confirm('Удалить привычку?')) return;
   let habits = loadHabits();
@@ -170,10 +162,12 @@ let iconPickerOpen = false;
 
 function openModal() {
   document.getElementById('modalOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
   closeIconPicker();
   resetModal();
 }
@@ -190,7 +184,7 @@ function resetModal() {
   document.getElementById('selectedIcon').textContent = '😊';
   reminderOn = false;
   document.getElementById('reminderToggle').classList.remove('on');
-  document.getElementById('toggleLabel').textContent = 'нет';
+  document.getElementById('toggleLabel').textContent = 'Нет';
   document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
 
   const now = new Date();
@@ -226,10 +220,10 @@ function toggleAllDays(btn) {
 function toggleReminder() {
   reminderOn = !reminderOn;
   document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
-  document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
+  document.getElementById('toggleLabel').textContent = reminderOn ? 'Да' : 'Нет';
 }
 
-// ===== СОХРАНИТЬ ПРИВЫЧКУ =====
+// ===== СОХРАНИТЬ =====
 function saveHabit() {
   const name = document.getElementById('habitName').value.trim();
   if (!name) {
