@@ -4,11 +4,11 @@ if (tg) tg.expand();
 
 // ===== ИКОНКИ =====
 const icons = [
-'😊','😎','🥳','😴','🤩','💪','🏃','🚴','🏊','🧘',
-'📚','✏️','🎯','💧','🎵','🍎','🥗','🔥','⭐','🌟',
-'💡','🎨','🏋️','❤️','🧠','🎸','🌿','☀️','🌙','⚡',
-'A','B','C','D','E','F','G','H','I','J',
-'K','L','M','N','O','P','Q','R','S','T'
+  '😊','😎','🥳','😴','🤩','💪','🏃','🚴','🏊','🧘',
+  '📚','✏️','🎯','💧','🎵','🍎','🥗','🔥','⭐','🌟',
+  '💡','🎨','🏋️','❤️','🧠','🎸','🌿','☀️','🌙','⚡',
+  'A','B','C','D','E','F','G','H','I','J',
+  'K','L','M','N','O','P','Q','R','S','T'
 ];
 
 // ===== ДАТА =====
@@ -16,163 +16,151 @@ let dayOffset = 0;
 
 const DAYS_RU = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 const MONTHS_RU = [
-'января','февраля','марта','апреля','мая','июня',
-'июля','августа','сентября','октября','ноября','декабря'
+  'января','февраля','марта','апреля','мая','июня',
+  'июля','августа','сентября','октября','ноября','декабря'
 ];
 
 function getSelectedDate() {
-    const d = new Date();
-    d.setDate(d.getDate() + dayOffset);
-    d.setHours(0,0,0,0);
-    return d;
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(0,0,0,0);
+  return d;
 }
 
 function dateKey(date) {
-    return date.toISOString().slice(0,10);
+  return date.toISOString().slice(0,10);
 }
 
 function updateDateDisplay() {
-    const d = getSelectedDate();
-    document.getElementById('dateNavDay').textContent = DAYS_RU[d.getDay()];
-    document.getElementById('dateNavFull').textContent =
-        d.getDate() + ' ' + MONTHS_RU[d.getMonth()] + ' ' + d.getFullYear();
+  const d = getSelectedDate();
+  document.getElementById('dateNavDay').textContent = DAYS_RU[d.getDay()];
+  document.getElementById('dateNavFull').textContent =
+    d.getDate() + ' ' + MONTHS_RU[d.getMonth()] + ' ' + d.getFullYear();
 }
 
 function changeDay(delta) {
-    dayOffset += delta;
-    updateDateDisplay();
-    renderHabits();
+  dayOffset += delta;
+  updateDateDisplay();
+  renderHabits();
 }
 
 // ===== ХРАНИЛИЩЕ =====
 function loadHabits() {
-    return JSON.parse(localStorage.getItem('habits') || '[]');
+  return JSON.parse(localStorage.getItem('habits') || '[]');
 }
 function saveHabits(habits) {
-    localStorage.setItem('habits', JSON.stringify(habits));
+  localStorage.setItem('habits', JSON.stringify(habits));
 }
 function loadProgress() {
-    return JSON.parse(localStorage.getItem('progress') || '{}');
+  return JSON.parse(localStorage.getItem('progress') || '{}');
 }
 function saveProgress(progress) {
-    localStorage.setItem('progress', JSON.stringify(progress));
+  localStorage.setItem('progress', JSON.stringify(progress));
 }
 
-// ===== ДНЕВНОЙ ПРОГРЕСС =====
+// ===== ПРОГРЕСС ДНЯ =====
 function updateDayProgress() {
-    const habits = loadHabits();
-    const progress = loadProgress();
-    const key = dateKey(getSelectedDate());
-    const dayProgress = progress[key] || {};
+  const habits = loadHabits();
+  const progress = loadProgress();
+  const key = dateKey(getSelectedDate());
+  const dayProgress = progress[key] || {};
 
-    const total = habits.length;
-    if (total === 0) {
-        document.getElementById('dayProgressPercent').textContent = '0%';
-        document.getElementById('dayProgressFill').style.width = '0%';
-        document.getElementById('dayProgressSub').textContent = '0 из 0 привычек выполнено';
-        return;
-    }
+  if (habits.length === 0) {
+    document.getElementById('dayProgressPercent').textContent = '0%';
+    document.getElementById('dayProgressFill').style.width = '0%';
+    document.getElementById('dayProgressSub').textContent = '0 из 0 привычек выполнено';
+    return;
+  }
 
-    let done = 0;
-    habits.forEach(h => {
-        const current = dayProgress[h.id] || 0;
-        if (current >= h.goal) done++;
-    });
+  let done = 0;
+  habits.forEach(h => {
+    const cur = dayProgress[h.id] || 0;
+    if (cur >= h.goal) done++;
+  });
 
-    const percent = Math.round((done / total) * 100);
-    document.getElementById('dayProgressPercent').textContent = percent + '%';
-    document.getElementById('dayProgressFill').style.width = percent + '%';
-    document.getElementById('dayProgressSub').textContent =
-        done + ' из ' + total + ' привычек выполнено';
-
-    // Цвет заливки
-    const fill = document.getElementById('dayProgressFill');
-    if (percent === 100) {
-        fill.style.background = 'linear-gradient(90deg, #43e97b, #38f9d7)';
-    } else if (percent >= 50) {
-        fill.style.background = 'linear-gradient(90deg, #f7971e, #ffd200)';
-    } else {
-        fill.style.background = 'linear-gradient(90deg, #667eea, #764ba2)';
-    }
+  const pct = Math.round((done / habits.length) * 100);
+  document.getElementById('dayProgressPercent').textContent = pct + '%';
+  document.getElementById('dayProgressFill').style.width = pct + '%';
+  document.getElementById('dayProgressSub').textContent =
+    done + ' из ' + habits.length + ' привычек выполнено';
 }
 
 // ===== ОТРИСОВКА ПРИВЫЧЕК =====
 function renderHabits() {
-    const habits = loadHabits();
-    const progress = loadProgress();
-    const key = dateKey(getSelectedDate());
-    const dayProgress = progress[key] || {};
+  const habits = loadHabits();
+  const progress = loadProgress();
+  const key = dateKey(getSelectedDate());
+  const dayProgress = progress[key] || {};
 
-    const list = document.getElementById('habitsList');
-    list.innerHTML = '';
+  const list = document.getElementById('habitsList');
+  list.innerHTML = '';
 
-    updateDayProgress();
+  updateDayProgress();
 
-    if (habits.length === 0) {
-        list.innerHTML = '<p class="empty-msg">Нет привычек. Добавьте первую!</p>';
-        return;
-    }
+  if (habits.length === 0) {
+    list.innerHTML = '<p class="empty-msg">Нет привычек. Добавьте первую!</p>';
+    return;
+  }
 
-    habits.forEach(habit => {
-        const current = dayProgress[habit.id] || 0;
-        const percent = Math.min((current / habit.goal) * 100, 100);
-        const done = current >= habit.goal;
+  habits.forEach(habit => {
+    const current = dayProgress[habit.id] || 0;
+    const percent = Math.min((current / habit.goal) * 100, 100);
+    const done = current >= habit.goal;
 
-        const card = document.createElement('div');
-        card.className = 'habit-card' + (done ? ' completed' : '');
-        card.dataset.id = habit.id;
+    const card = document.createElement('div');
+    card.className = 'habit-card' + (done ? ' completed' : '');
+    card.dataset.id = habit.id;
 
-        card.innerHTML = `
-            <div class="habit-icon-circle ${done ? 'done' : ''}">${habit.icon}</div>
-            <div class="habit-body">
-                <div class="habit-card-name">${habit.name}</div>
-                <div class="habit-progress-wrap">
-                    <div class="habit-progress-bar">
-                        <div class="habit-progress-fill ${done ? 'done' : ''}"
-                             id="fill-${habit.id}"
-                             style="width:${percent}%">
-                        </div>
-                        <span class="habit-progress-text" id="text-${habit.id}">
-                            ${current} / ${habit.goal} ${habit.unit}
-                        </span>
-                    </div>
-                </div>
+    card.innerHTML = `
+      <div class="habit-icon-circle ${done ? 'done' : ''}">${habit.icon}</div>
+      <div class="habit-body">
+        <div class="habit-card-name">${habit.name}</div>
+        <div class="habit-progress-wrap">
+          <div class="habit-progress-bar">
+            <div class="habit-progress-fill"
+                 id="fill-${habit.id}"
+                 style="width:${percent}%${done ? ';background:var(--green)' : ''}">
             </div>
-            <button class="habit-plus-btn ${done ? 'done' : ''}" onclick="incrementHabit(${habit.id})">
-                ${done ? '✓' : '+'}
-            </button>
-            <button class="habit-del-btn" onclick="deleteHabit(${habit.id})">✕</button>
-        `;
+            <span class="habit-progress-text" id="text-${habit.id}">
+              ${current} / ${habit.goal} ${habit.unit}
+            </span>
+          </div>
+        </div>
+      </div>
+      <button class="habit-plus-btn ${done ? 'done' : ''}"
+        onclick="incrementHabit(${habit.id})">+</button>
+      <button class="habit-del-btn" onclick="deleteHabit(${habit.id})">✕</button>
+    `;
 
-        list.appendChild(card);
-    });
+    list.appendChild(card);
+  });
 }
 
 // ===== УВЕЛИЧИТЬ СЧЁТЧИК =====
 function incrementHabit(id) {
-    const habits = loadHabits();
-    const habit = habits.find(h => h.id === id);
-    if (!habit) return;
+  const habits = loadHabits();
+  const habit = habits.find(h => h.id === id);
+  if (!habit) return;
 
-    const progress = loadProgress();
-    const key = dateKey(getSelectedDate());
-    if (!progress[key]) progress[key] = {};
+  const progress = loadProgress();
+  const key = dateKey(getSelectedDate());
+  if (!progress[key]) progress[key] = {};
 
-    const current = progress[key][id] || 0;
-    if (current >= habit.goal) return;
+  const current = progress[key][id] || 0;
+  if (current >= habit.goal) return;
 
-    progress[key][id] = current + 1;
-    saveProgress(progress);
-    renderHabits();
+  progress[key][id] = current + 1;
+  saveProgress(progress);
+  renderHabits();
 }
 
 // ===== УДАЛИТЬ ПРИВЫЧКУ =====
 function deleteHabit(id) {
-    if (!confirm('Удалить привычку?')) return;
-    let habits = loadHabits();
-    habits = habits.filter(h => h.id !== id);
-    saveHabits(habits);
-    renderHabits();
+  if (!confirm('Удалить привычку?')) return;
+  let habits = loadHabits();
+  habits = habits.filter(h => h.id !== id);
+  saveHabits(habits);
+  renderHabits();
 }
 
 // ===== МОДАЛКА =====
@@ -181,138 +169,135 @@ let reminderOn = false;
 let iconPickerOpen = false;
 
 function openModal() {
-    document.getElementById('modalOverlay').classList.add('active');
+  document.getElementById('modalOverlay').classList.add('active');
 }
 
 function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-    closeIconPicker();
-    resetModal();
+  document.getElementById('modalOverlay').classList.remove('active');
+  closeIconPicker();
+  resetModal();
 }
 
 function closeModalOutside(e) {
-    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
 function resetModal() {
-    document.getElementById('habitName').value = '';
-    document.getElementById('habitCount').value = '1';
-    document.getElementById('habitUnit').value = 'раз';
-    selectedIconValue = '😊';
-    document.getElementById('selectedIcon').textContent = '😊';
-    reminderOn = false;
-    document.getElementById('reminderToggle').classList.remove('on');
-    document.getElementById('toggleLabel').textContent = 'нет';
-    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('habitName').value = '';
+  document.getElementById('habitCount').value = '1';
+  document.getElementById('habitUnit').value = 'раз';
+  selectedIconValue = '😊';
+  document.getElementById('selectedIcon').textContent = '😊';
+  reminderOn = false;
+  document.getElementById('reminderToggle').classList.remove('on');
+  document.getElementById('toggleLabel').textContent = 'нет';
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
 
-    const now = new Date();
-    document.getElementById('startDay').value = now.getDate();
-    document.getElementById('startMonth').value = now.getMonth() + 1;
-    document.getElementById('startYear').value = now.getFullYear();
+  const now = new Date();
+  document.getElementById('startDay').value = now.getDate();
+  document.getElementById('startMonth').value = now.getMonth() + 1;
+  document.getElementById('startYear').value = now.getFullYear();
 }
 
 // ===== ПИКЕР ИКОНОК =====
 function openIconPicker() {
-    iconPickerOpen = !iconPickerOpen;
-    document.getElementById('iconPicker').classList.toggle('open', iconPickerOpen);
+  iconPickerOpen = !iconPickerOpen;
+  document.getElementById('iconPicker').classList.toggle('open', iconPickerOpen);
 }
 
 function closeIconPicker() {
-    iconPickerOpen = false;
-    document.getElementById('iconPicker').classList.remove('open');
+  iconPickerOpen = false;
+  document.getElementById('iconPicker').classList.remove('open');
 }
 
 // ===== ДНИ НЕДЕЛИ =====
 function toggleDay(btn) {
-    btn.classList.toggle('active');
+  btn.classList.toggle('active');
 }
 
 function toggleAllDays(btn) {
-    const dayBtns = document.querySelectorAll('.day-btn:not(.day-btn-all)');
-    const allActive = [...dayBtns].every(b => b.classList.contains('active'));
-    dayBtns.forEach(b => b.classList.toggle('active', !allActive));
-    btn.classList.toggle('active', !allActive);
+  const dayBtns = document.querySelectorAll('.day-btn:not(.day-btn-all)');
+  const allActive = [...dayBtns].every(b => b.classList.contains('active'));
+  dayBtns.forEach(b => b.classList.toggle('active', !allActive));
+  btn.classList.toggle('active', !allActive);
 }
 
 // ===== НАПОМИНАНИЯ =====
 function toggleReminder() {
-    reminderOn = !reminderOn;
-    document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
-    document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
+  reminderOn = !reminderOn;
+  document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
+  document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
 }
 
 // ===== СОХРАНИТЬ ПРИВЫЧКУ =====
 function saveHabit() {
-    const name = document.getElementById('habitName').value.trim();
-    if (!name) {
-        alert('Введите название привычки!');
-        return;
-    }
+  const name = document.getElementById('habitName').value.trim();
+  if (!name) {
+    alert('Введите название привычки!');
+    return;
+  }
 
-    const goal = parseInt(document.getElementById('habitCount').value) || 1;
-    const unit = document.getElementById('habitUnit').value;
-    const icon = selectedIconValue;
-    const id = Date.now();
+  const goal = parseInt(document.getElementById('habitCount').value) || 1;
+  const unit = document.getElementById('habitUnit').value;
+  const icon = selectedIconValue;
+  const id = Date.now();
 
-    const habits = loadHabits();
-    habits.push({ id, name, icon, goal, unit });
-    saveHabits(habits);
+  const habits = loadHabits();
+  habits.push({ id, name, icon, goal, unit });
+  saveHabits(habits);
 
-    closeModal();
-    renderHabits();
+  closeModal();
+  renderHabits();
 }
 
 // ===== НАВИГАЦИЯ =====
 function showPage(page) {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.getElementById('nav-' + page)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('nav-' + page)?.classList.add('active');
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function () {
-    // Заполнить дни
-    const daySelect = document.getElementById('startDay');
-    for (let i = 1; i <= 31; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = i < 10 ? '0' + i : i;
-        daySelect.appendChild(opt);
-    }
+  const daySelect = document.getElementById('startDay');
+  for (let i = 1; i <= 31; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = i < 10 ? '0' + i : i;
+    daySelect.appendChild(opt);
+  }
 
-    // Заполнить годы
-    const yearSelect = document.getElementById('startYear');
-    const yr = new Date().getFullYear();
-    for (let y = yr; y <= yr + 5; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        yearSelect.appendChild(opt);
-    }
+  const yearSelect = document.getElementById('startYear');
+  const yr = new Date().getFullYear();
+  for (let y = yr; y <= yr + 5; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
+  }
 
-    const now = new Date();
-    document.getElementById('startDay').value = now.getDate();
-    document.getElementById('startMonth').value = now.getMonth() + 1;
-    document.getElementById('startYear').value = now.getFullYear();
+  const now = new Date();
+  document.getElementById('startDay').value = now.getDate();
+  document.getElementById('startMonth').value = now.getMonth() + 1;
+  document.getElementById('startYear').value = now.getFullYear();
 
-    // Пикер иконок
-    const grid = document.getElementById('iconGrid');
-    icons.forEach(icon => {
-        const btn = document.createElement('button');
-        btn.className = 'icon-option';
-        btn.textContent = icon;
-        btn.onclick = function () {
-            selectedIconValue = icon;
-            document.getElementById('selectedIcon').textContent = icon;
-            closeIconPicker();
-        };
-        grid.appendChild(btn);
-    });
+  const grid = document.getElementById('iconGrid');
+  icons.forEach(icon => {
+    const btn = document.createElement('button');
+    btn.className = 'icon-option';
+    btn.textContent = icon;
+    btn.onclick = function () {
+      selectedIconValue = icon;
+      document.getElementById('selectedIcon').textContent = icon;
+      closeIconPicker();
+    };
+    grid.appendChild(btn);
+  });
 
-    updateDateDisplay();
-    renderHabits();
+  updateDateDisplay();
+  renderHabits();
 
-    document.addEventListener('touchmove', e => {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('touchmove', e => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('gesturestart', e => e.preventDefault());
 };
