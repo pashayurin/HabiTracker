@@ -2,17 +2,18 @@
 :root {
   --black: #111111;
   --white: #ffffff;
-  --gray-light: #f4f4f6;
-  --gray-mid: #e2e2e6;
-  --gray-text: #888888;
-  --blue: #1a73e8;
-  --blue-light: #e8f0fd;
+  --gray-light: #f2f3f7;
+  --gray-mid: #e0e0e6;
+  --gray-text: #9a9aaa;
+  --blue: #4f7fff;
+  --blue-light: #eef2ff;
   --green: #34c759;
-  --green-light: #e6f9ed;
+  --green-light: #edfaf2;
   --red: #ff3b30;
-  --radius: 16px;
+  --radius: 18px;
   --radius-sm: 10px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-modal: 0 12px 48px rgba(0,0,0,0.22);
 }
 
 /* ===== СБРОС ===== */
@@ -28,31 +29,40 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   background: var(--gray-light);
   color: var(--black);
-  padding-top: 100px;
-  padding-bottom: 75px;
+  padding-top: 104px;
+  padding-bottom: 78px;
   touch-action: pan-x pan-y;
 }
 
 input, textarea, select {
   -webkit-user-select: text;
-  user-select: text
+  user-select: text;
+}
+
+/* ===== ШАПКА ===== */
+.top-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
   background: var(--white);
   border-bottom: 1px solid var(--gray-mid);
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 16px 10px;
+  padding: 12px 18px 10px;
   gap: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.07);
 }
 
 .app-title {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   font-style: italic;
   letter-spacing: -0.5px;
-  color: var(--black);
+  background: linear-gradient(90deg, var(--blue), #a259ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ===== НАВИГАЦИЯ ПО ДНЯМ ===== */
@@ -66,22 +76,22 @@ input, textarea, select {
 
 .date-nav-btn {
   width: 34px; height: 34px;
-  border: 2px solid var(--black);
+  border: 2px solid var(--gray-mid);
   border-radius: 50%;
-  background: var(--white);
+  background: var(--gray-light);
   font-size: 22px;
-  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
   flex-shrink: 0;
   font-weight: bold;
+  color: var(--black);
 }
 .date-nav-btn:active {
-  background: var(--gray-light);
-  transform: scale(0.92);
+  background: var(--gray-mid);
+  transform: scale(0.9);
 }
 
 .date-nav-info {
@@ -93,6 +103,7 @@ input, textarea, select {
 .date-nav-day {
   font-size: 15px;
   font-weight: 700;
+  color: var(--black);
 }
 .date-nav-full {
   font-size: 12px;
@@ -108,8 +119,8 @@ input, textarea, select {
 .day-progress-block {
   background: var(--white);
   border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
   box-shadow: var(--shadow);
 }
 
@@ -117,7 +128,7 @@ input, textarea, select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .day-progress-label {
@@ -127,7 +138,7 @@ input, textarea, select {
 }
 
 .day-progress-percent {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--blue);
 }
@@ -138,14 +149,14 @@ input, textarea, select {
   background: var(--gray-mid);
   border-radius: 99px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .day-progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--blue) 0%, var(--green) 100%);
+  background: linear-gradient(90deg, var(--blue) 0%, #a259ff 100%);
   border-radius: 99px;
-  transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
   width: 0%;
 }
 
@@ -157,29 +168,29 @@ input, textarea, select {
 /* ===== КНОПКА ДОБАВИТЬ ===== */
 .add-habit-btn {
   width: 100%;
-  padding: 14px 18px;
+  padding: 15px 18px;
   font-size: 15px;
   font-weight: 600;
   background: var(--white);
-  border: 2px dashed var(--gray-mid);
+  border: 2px dashed var(--blue);
   border-radius: var(--radius);
   cursor: pointer;
   text-align: left;
-  color: var(--black);
-  margin-bottom: 12px;
+  color: var(--blue);
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  box-shadow: var(--shadow);
 }
 .add-habit-btn:active {
-  background: var(--gray-light);
-  border-color: var(--black);
+  background: var(--blue-light);
+  transform: scale(0.98);
 }
-.add-habit-plus {
+.add-habit-icon {
   font-size: 22px;
   font-weight: 300;
-  color: var(--blue);
   line-height: 1;
 }
 
@@ -198,7 +209,7 @@ input, textarea, select {
   gap: 10px;
 }
 
-/* ===== КАРТОЧКА ПРИВЫЧКИ ===== */
+/* ===== КАРТОЧКА ===== */
 .habit-card {
   display: flex;
   align-items: center;
@@ -209,7 +220,6 @@ input, textarea, select {
   box-shadow: var(--shadow);
   transition: box-shadow 0.2s;
 }
-
 .habit-card.completed {
   background: var(--green-light);
 }
@@ -218,8 +228,7 @@ input, textarea, select {
 }
 
 .habit-icon-circle {
-  width: 52px; height: 52px;
-  min-width: 52px;
+  width: 52px; height: 52px; min-width: 52px;
   border-radius: 50%;
   border: 2px solid var(--gray-mid);
   display: flex;
@@ -242,7 +251,6 @@ input, textarea, select {
   gap: 6px;
   min-width: 0;
 }
-
 .habit-card-name {
   font-size: 15px;
   font-weight: 700;
@@ -261,19 +269,16 @@ input, textarea, select {
   border-radius: 99px;
   overflow: hidden;
 }
-
 .habit-progress-fill {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  background: var(--black);
+  background: linear-gradient(90deg, var(--blue), #a259ff);
   border-radius: 99px;
-  transition: width 0.3s ease;
+  transition: width 0.35s ease;
 }
-
 .habit-progress-text {
   position: absolute;
-  left: 0; right: 0;
-  top: 50%;
+  left: 0; right: 0; top: 50%;
   transform: translateY(-50%);
   text-align: center;
   font-size: 11px;
@@ -285,10 +290,9 @@ input, textarea, select {
 }
 
 .habit-plus-btn {
-  width: 42px; height: 42px;
-  min-width: 42px;
+  width: 42px; height: 42px; min-width: 42px;
   border-radius: 50%;
-  border: 2px solid var(--black);
+  border: 2px solid var(--blue);
   background: var(--white);
   font-size: 26px;
   font-weight: 300;
@@ -297,12 +301,12 @@ input, textarea, select {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: var(--blue);
   transition: background 0.15s, transform 0.1s;
-  color: var(--black);
 }
 .habit-plus-btn:active {
-  background: var(--gray-light);
-  transform: scale(0.90);
+  background: var(--blue-light);
+  transform: scale(0.88);
 }
 .habit-plus-btn.done {
   border-color: var(--green);
@@ -310,8 +314,7 @@ input, textarea, select {
 }
 
 .habit-del-btn {
-  width: 28px; height: 28px;
-  min-width: 28px;
+  width: 28px; height: 28px; min-width: 28px;
   border-radius: 50%;
   border: 1px solid var(--gray-mid);
   background: var(--white);
@@ -341,18 +344,11 @@ input, textarea, select {
   align-items: center;
   justify-content: space-around;
   z-index: 1000;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 -2px 14px rgba(0,0,0,0.07);
 }
 
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  cursor: pointer;
-  padding: 8px 24px;
-  border-radius: 12px;
-  transition: opacity 0.15s;
-}
-.nav-item:active { opacity: 0.5; }
-.nav-icon { font-size: 22px; }
+  gap:
