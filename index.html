@@ -32,7 +32,7 @@
       <div class="icon-grid" id="iconGrid"></div>
     </div>
 
-    <!-- Блок настроек -->
+    <!-- Настройки -->
     <div class="settings-block">
 
       <div class="modal-row">
@@ -105,7 +105,6 @@
 
     </div>
 
-    <!-- Кнопки -->
     <div class="modal-buttons">
       <button class="btn-cancel" onclick="closeModal()">Отмена</button>
       <button class="btn-save" onclick="saveHabit()">Сохранить</button>
@@ -114,9 +113,13 @@
   </div>
 </div>
 
-<!-- ШАПКА -->
+<!-- ШАПКА: только логотип -->
 <header class="top-bar">
   <h1 class="app-title">HabiTracker</h1>
+</header>
+
+<!-- ПОДШАПКА: переключатель дней -->
+<div class="date-bar">
   <div class="date-nav">
     <button class="date-nav-btn" onclick="changeDay(-1)">&#8249;</button>
     <div class="date-nav-info">
@@ -125,7 +128,7 @@
     </div>
     <button class="date-nav-btn" onclick="changeDay(1)">&#8250;</button>
   </div>
-</header>
+</div>
 
 <!-- ОСНОВНОЙ КОНТЕНТ -->
 <main class="content">
