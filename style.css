@@ -11,7 +11,6 @@ body {
     color: #000000;
     padding-top: 60px;
     padding-bottom: 70px;
-    /* Запрет приближения */
     touch-action: pan-x pan-y;
     -ms-touch-action: pan-x pan-y;
 }
@@ -76,7 +75,6 @@ body {
     gap: 12px;
 }
 
-/* Иконка-кружок */
 .habit-icon-circle {
     width: 48px;
     height: 48px;
@@ -91,7 +89,6 @@ body {
     background: #fff;
 }
 
-/* Средняя часть */
 .habit-middle {
     flex: 1;
     display: flex;
@@ -104,7 +101,6 @@ body {
     font-weight: bold;
 }
 
-/* Прогресс бар */
 .progress-bar-wrap {
     width: 100%;
     height: 8px;
@@ -125,7 +121,6 @@ body {
     color: #888;
 }
 
-/* Кнопка плюс */
 .plus-btn {
     width: 40px;
     height: 40px;
@@ -256,7 +251,7 @@ body {
 }
 .habit-name-input:focus { border-color: #000; }
 
-/* Пикер иконок */
+/* ===== ПИКЕР ИКОНОК ===== */
 .icon-picker {
     display: none;
     background: #f8f8f8;
@@ -290,7 +285,7 @@ body {
 }
 .icon-option:active { background: #e0e0e0; }
 
-/* Настройки */
+/* ===== НАСТРОЙКИ ===== */
 .settings-box {
     border: 1.5px solid #ccc;
     border-radius: 14px;
@@ -345,19 +340,66 @@ body {
     cursor: pointer;
 }
 
-.date-inputs { display: flex; gap: 6px; }
-
-.date-select {
-    padding: 6px 4px;
-    font-size: 13px;
-    font-weight: bold;
-    border: 1.5px solid #ccc;
-    border-radius: 8px;
-    background: #fff;
-    outline: none;
-    cursor: pointer;
+/* ===== КАСТОМНЫЙ ВЫБОР ДАТЫ ===== */
+.date-inputs {
+    display: flex;
+    gap: 6px;
+    align-items: center;
 }
 
+.custom-select-wrap {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.date-arrow {
+    background: #f0f0f0;
+    border: none;
+    padding: 6px 7px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #333;
+    line-height: 1;
+    transition: background 0.15s;
+}
+.date-arrow:active { background: #ddd; }
+
+.date-value {
+    min-width: 34px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 0 3px;
+    user-select: none;
+}
+
+.date-input {
+    width: 36px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 6px 0;
+    -moz-appearance: textfield;
+}
+.date-input::-webkit-outer-spin-button,
+.date-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.date-input-year {
+    width: 46px;
+}
+
+/* ===== ДНИ НЕДЕЛИ ===== */
 .days-row {
     display: flex;
     flex-wrap: wrap;
@@ -387,7 +429,7 @@ body {
     border-color: #000;
 }
 
-/* Тоггл */
+/* ===== ТОГГЛ ===== */
 .toggle-wrap {
     display: flex;
     align-items: center;
@@ -423,7 +465,7 @@ body {
 }
 .toggle.on .toggle-thumb { left: 25px; }
 
-/* Кнопки модалки */
+/* ===== КНОПКИ МОДАЛКИ ===== */
 .modal-buttons {
     display: flex;
     gap: 12px;
@@ -446,48 +488,4 @@ body {
     font-size: 15px;
     font-style: italic;
     font-weight: bold;
-    background: #000;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-}
-.btn-save:active { opacity: 0.7; }
-
-/* ===== КАСТОМНЫЙ ВЫБОР ДАТЫ ===== */
-.date-inputs {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.custom-select-wrap {
-    display: flex;
-    align-items: center;
-    border: 1.5px solid #ccc;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fff;
-}
-
-.date-arrow {
-    background: #f0f0f0;
-    border: none;
-    padding: 6px 7px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    color: #333;
-    line-height: 1;
-    transition: background 0.15s;
-}
-.date-arrow:active { background: #ddd; }
-
-.date-value {
-    min-width: 28px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: bold;
-    padding: 0 3px;
-    user-select: none;
-}
+    
