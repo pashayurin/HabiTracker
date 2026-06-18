@@ -1,9 +1,11 @@
 const tg = window.Telegram.WebApp;
+tg.expand();
+
 // ===== СОСТОЯНИЕ ДАТЫ =====
 const months = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
 const dateState = {
     day: 1,
-    month: 0,   // 0 = январь
+    month: 0,
     year: new Date().getFullYear()
 };
 
@@ -18,7 +20,6 @@ function changeDate(type, delta) {
         dateState.month += delta;
         if (dateState.month < 0) dateState.month = 11;
         if (dateState.month > 11) dateState.month = 0;
-        // Корректируем день если превышает кол-во дней в новом месяце
         const maxDay = new Date(dateState.year, dateState.month + 1, 0).getDate();
         if (dateState.day > maxDay) dateState.day = maxDay;
     }
@@ -32,11 +33,29 @@ function changeDate(type, delta) {
 }
 
 function updateDateDisplay() {
-    document.getElementById('startDay').textContent = dateState.day;
+    document.getElementById('startDay').value = dateState.day;
     document.getElementById('startMonth').textContent = months[dateState.month];
-    document.getElementById('startYear').textContent = dateState.year;
+    document.getElementById('startYear').value = dateState.year;
 }
-tg.expand();
+
+function onDateInput(type) {
+    if (type === 'day') {
+        let val = parseInt(document.getElementById('startDay').value);
+        const maxDay = new Date(dateState.year, dateState.month + 1, 0).getDate();
+        if (isNaN(val) || val < 1) val = 1;
+        if (val > maxDay) val = maxDay;
+        dateState.day = val;
+        document.getElementById('startDay').value = val;
+    }
+    if (type === 'year') {
+        let val = parseInt(document.getElementById('startYear').value);
+        const currentYear = new Date().getFullYear();
+        if (isNaN(val) || val < currentYear) val = currentYear;
+        if (val > currentYear + 10) val = currentYear + 10;
+        dateState.year = val;
+        document.getElementById('startYear').value = val;
+    }
+}
 
 // ===== ИКОНКИ =====
 const icons = [
@@ -50,18 +69,17 @@ const icons = [
 let selectedIconValue = 'A';
 let reminderOn = false;
 let iconPickerOpen = false;
-
-// Массив для хранения всех привычек
 let habits = [];
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function () {
     // Инициализация даты
-const now = new Date();
-dateState.day = now.getDate();
-dateState.month = now.getMonth();
-dateState.year = now.getFullYear();
-updateDateDisplay();
+    const now = new Date();
+    dateState.day = now.getDate();
+    dateState.month = now.getMonth();
+    dateState.year = now.getFullYear();
+    updateDateDisplay();
+
     // Заполняем пикер иконок
     const grid = document.getElementById('iconGrid');
     icons.forEach(icon => {
@@ -106,10 +124,10 @@ function resetModal() {
     document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
 
     const now = new Date();
-dateState.day = now.getDate();
-dateState.month = now.getMonth();
-dateState.year = now.getFullYear();
-updateDateDisplay();
+    dateState.day = now.getDate();
+    dateState.month = now.getMonth();
+    dateState.year = now.getFullYear();
+    updateDateDisplay();
 }
 
 // ===== ПИКЕР ИКОНОК =====
@@ -156,7 +174,6 @@ function saveHabit() {
     const goalCount = parseInt(document.getElementById('habitCount').value) || 1;
     const unit = document.getElementById('habitUnit').value;
 
-    // Создаём объект привычки
     const habit = {
         id: Date.now(),
         name: name,
@@ -181,11 +198,7 @@ function renderHabit(habit) {
 
     card.innerHTML = `
         <div class="habit-card-inner">
-
-            <!-- Иконка -->
             <div class="habit-icon-circle">${habit.icon}</div>
-
-            <!-- Название + прогресс бар -->
             <div class="habit-middle">
                 <div class="habit-name">${habit.name}</div>
                 <div class="progress-bar-wrap">
@@ -195,10 +208,7 @@ function renderHabit(habit) {
                     0 / ${habit.goal} ${habit.unit}
                 </div>
             </div>
-
-            <!-- Кнопка плюс -->
             <button class="plus-btn" onclick="incrementHabit(${habit.id})">＋</button>
-
         </div>
     `;
 
@@ -210,11 +220,9 @@ function incrementHabit(id) {
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
 
-    // Не превышаем цель
     if (habit.current < habit.goal) {
         habit.current++;
     } else {
-        // Уже выполнено — сбрасываем
         habit.current = 0;
     }
 
@@ -232,7 +240,6 @@ function updateHabitUI(habit) {
     if (bar) bar.style.width = percent + '%';
     if (text) text.textContent = `${habit.current} / ${habit.goal} ${habit.unit}`;
 
-    // Подсвечиваем карточку если выполнено
     if (habit.current >= habit.goal) {
         card.classList.add('completed');
         bar.style.background = '#4CAF50';
