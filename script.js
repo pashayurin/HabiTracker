@@ -19,28 +19,12 @@ let habits = [];
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function () {
-    const daySelect = document.getElementById('startDay');
-    for (let i = 1; i <= 31; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = i;
-        daySelect.appendChild(opt);
-    }
-
-    const yearSelect = document.getElementById('startYear');
-    const currentYear = new Date().getFullYear();
-    for (let y = currentYear; y <= currentYear + 5; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        yearSelect.appendChild(opt);
-    }
-
-    const now = new Date();
-    document.getElementById('startDay').value = now.getDate();
-    document.getElementById('startMonth').value = now.getMonth() + 1;
-    document.getElementById('startYear').value = now.getFullYear();
-
+    // Инициализация даты
+const now = new Date();
+dateState.day = now.getDate();
+dateState.month = now.getMonth();
+dateState.year = now.getFullYear();
+updateDateDisplay();
     // Заполняем пикер иконок
     const grid = document.getElementById('iconGrid');
     icons.forEach(icon => {
