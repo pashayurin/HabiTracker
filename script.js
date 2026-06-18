@@ -1,4 +1,41 @@
 const tg = window.Telegram.WebApp;
+// ===== СОСТОЯНИЕ ДАТЫ =====
+const months = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
+const dateState = {
+    day: 1,
+    month: 0,   // 0 = январь
+    year: new Date().getFullYear()
+};
+
+function changeDate(type, delta) {
+    if (type === 'day') {
+        dateState.day += delta;
+        const maxDay = new Date(dateState.year, dateState.month + 1, 0).getDate();
+        if (dateState.day < 1) dateState.day = maxDay;
+        if (dateState.day > maxDay) dateState.day = 1;
+    }
+    if (type === 'month') {
+        dateState.month += delta;
+        if (dateState.month < 0) dateState.month = 11;
+        if (dateState.month > 11) dateState.month = 0;
+        // Корректируем день если превышает кол-во дней в новом месяце
+        const maxDay = new Date(dateState.year, dateState.month + 1, 0).getDate();
+        if (dateState.day > maxDay) dateState.day = maxDay;
+    }
+    if (type === 'year') {
+        dateState.year += delta;
+        const currentYear = new Date().getFullYear();
+        if (dateState.year < currentYear) dateState.year = currentYear;
+        if (dateState.year > currentYear + 10) dateState.year = currentYear + 10;
+    }
+    updateDateDisplay();
+}
+
+function updateDateDisplay() {
+    document.getElementById('startDay').textContent = dateState.day;
+    document.getElementById('startMonth').textContent = months[dateState.month];
+    document.getElementById('startYear').textContent = dateState.year;
+}
 tg.expand();
 
 // ===== ИКОНКИ =====
@@ -69,9 +106,10 @@ function resetModal() {
     document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
 
     const now = new Date();
-    document.getElementById('startDay').value = now.getDate();
-    document.getElementById('startMonth').value = now.getMonth() + 1;
-    document.getElementById('startYear').value = now.getFullYear();
+dateState.day = now.getDate();
+dateState.month = now.getMonth();
+dateState.year = now.getFullYear();
+updateDateDisplay();
 }
 
 // ===== ПИКЕР ИКОНОК =====
