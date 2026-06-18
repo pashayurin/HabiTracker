@@ -2,34 +2,31 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HabiTracker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ШАПКА СВЕРХУ -->
     <header class="top-bar">
         <h1 class="app-title">HabiTracker</h1>
     </header>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="content">
         <button class="add-habit-btn" onclick="openModal()">+ Добавить новую привычку</button>
         <div class="habits-list" id="habitsList"></div>
     </main>
 
-    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
     <nav class="bottom-bar">
-        <div class="nav-item active" onclick="showPage('home')">
+        <div class="nav-item active" onclick="showPage('home', this)">
             <span class="nav-icon">🏠</span>
             <span class="nav-label">Главная</span>
         </div>
-        <div class="nav-item" onclick="showPage('profile')">
+        <div class="nav-item" onclick="showPage('profile', this)">
             <span class="nav-icon">👤</span>
             <span class="nav-label">Профиль</span>
         </div>
-        <div class="nav-item" onclick="showPage('help')">
+        <div class="nav-item" onclick="showPage('help', this)">
             <span class="nav-icon">💬</span>
             <span class="nav-label">Помощь</span>
         </div>
@@ -41,7 +38,6 @@
 
             <h2 class="modal-title">Добавить привычку</h2>
 
-            <!-- ИКОНКА + НАЗВАНИЕ -->
             <div class="modal-top-row">
                 <div class="icon-circle" id="iconCircle" onclick="openIconPicker()">
                     <span id="selectedIcon">A</span>
@@ -54,10 +50,8 @@
                 <div class="icon-picker-grid" id="iconGrid"></div>
             </div>
 
-            <!-- НАСТРОЙКИ -->
             <div class="settings-box">
 
-                <!-- Количество в день -->
                 <div class="setting-row">
                     <span class="setting-label">количество в день</span>
                     <input type="number" class="setting-input-num" id="habitCount" placeholder="10" min="1">
@@ -65,7 +59,6 @@
 
                 <div class="divider"></div>
 
-                <!-- Единица измерения -->
                 <div class="setting-row">
                     <span class="setting-label">единица измерения</span>
                     <select class="setting-select" id="habitUnit">
@@ -80,7 +73,6 @@
 
                 <div class="divider"></div>
 
-                <!-- Дата начала -->
                 <div class="setting-row">
                     <span class="setting-label">дата начала</span>
                     <div class="date-inputs">
@@ -105,7 +97,6 @@
 
                 <div class="divider"></div>
 
-                <!-- Дни недели -->
                 <div class="setting-row setting-row-wrap">
                     <span class="setting-label">по каким дням недели</span>
                     <div class="days-row">
@@ -122,7 +113,6 @@
 
                 <div class="divider"></div>
 
-                <!-- Напоминания -->
                 <div class="setting-row">
                     <span class="setting-label">напоминания</span>
                     <div class="toggle-wrap">
@@ -135,7 +125,6 @@
 
             </div>
 
-            <!-- КНОПКИ -->
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeModal()">Отмена</button>
                 <button class="btn-save" onclick="saveHabit()">Сохранить</button>
