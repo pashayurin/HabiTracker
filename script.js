@@ -6,16 +6,19 @@ const icons = [
     'A','B','C','D','E','F','G','H','I','J','K','L','M',
     'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
     '🏃','💪','📚','✏️','🎯','💧','🧘','🎵','🍎','😴',
-    '🚴','🏊','🧠','❤️','⭐','🔥','🌟','💡','🎨','🏋️'
+    '🚴','🏊','🧠','❤️','⭐','🔥','🌟','💡','🎨','🏋️',
+    '🎮','🌿','🥗','🧹','💊','🛏️','🚿','📝','🎤','🌅'
 ];
 
 let selectedIconValue = 'A';
 let reminderOn = false;
 let iconPickerOpen = false;
 
-// Заполняем дни и годы
-window.onload = function() {
-    // Дни
+// Массив для хранения всех привычек
+let habits = [];
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+window.onload = function () {
     const daySelect = document.getElementById('startDay');
     for (let i = 1; i <= 31; i++) {
         const opt = document.createElement('option');
@@ -24,7 +27,6 @@ window.onload = function() {
         daySelect.appendChild(opt);
     }
 
-    // Годы
     const yearSelect = document.getElementById('startYear');
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y <= currentYear + 5; y++) {
@@ -34,7 +36,6 @@ window.onload = function() {
         yearSelect.appendChild(opt);
     }
 
-    // Устанавливаем текущую дату
     const now = new Date();
     document.getElementById('startDay').value = now.getDate();
     document.getElementById('startMonth').value = now.getMonth() + 1;
@@ -46,7 +47,7 @@ window.onload = function() {
         const btn = document.createElement('button');
         btn.className = 'icon-option';
         btn.textContent = icon;
-        btn.onclick = function() {
+        btn.onclick = function () {
             selectedIconValue = icon;
             document.getElementById('selectedIcon').textContent = icon;
             closeIconPicker();
@@ -93,11 +94,7 @@ function resetModal() {
 function openIconPicker() {
     iconPickerOpen = !iconPickerOpen;
     const picker = document.getElementById('iconPicker');
-    if (iconPickerOpen) {
-        picker.classList.add('open');
-    } else {
-        picker.classList.remove('open');
-    }
+    picker.classList.toggle('open', iconPickerOpen);
 }
 
 function closeIconPicker() {
@@ -114,11 +111,7 @@ function toggleAllDays(btn) {
     const dayBtns = document.querySelectorAll('.day-btn:not(.day-btn-all)');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
     dayBtns.forEach(b => {
-        if (allActive) {
-            b.classList.remove('active');
-        } else {
-            b.classList.add('active');
-        }
+        b.classList.toggle('active', !allActive);
     });
     btn.classList.toggle('active', !allActive);
 }
@@ -126,18 +119,11 @@ function toggleAllDays(btn) {
 // ===== НАПОМИНАНИЯ =====
 function toggleReminder() {
     reminderOn = !reminderOn;
-    const toggle = document.getElementById('reminderToggle');
-    const label = document.getElementById('toggleLabel');
-    if (reminderOn) {
-        toggle.classList.add('on');
-        label.textContent = 'да';
-    } else {
-        toggle.classList.remove('on');
-        label.textContent = 'нет';
-    }
+    document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
+    document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
 }
 
-// ===== СОХРАНИТЬ =====
+// ===== СОХРАНИТЬ ПРИВЫЧКУ =====
 function saveHabit() {
     const name = document.getElementById('habitName').value.trim();
     if (!name) {
@@ -145,42 +131,97 @@ function saveHabit() {
         return;
     }
 
-    const count = document.getElementById('habitCount').value || '—';
+    const goalCount = parseInt(document.getElementById('habitCount').value) || 1;
     const unit = document.getElementById('habitUnit').value;
-    const day = document.getElementById('startDay').value;
-    const month = document.getElementById('startMonth').value;
-    const year = document.getElementById('startYear').value;
 
-    const selectedDays = [...document.querySelectorAll('.day-btn:not(.day-btn-all).active')]
-        .map(b => b.dataset.day).join(', ') || 'не выбраны';
+    // Создаём объект привычки
+    const habit = {
+        id: Date.now(),
+        name: name,
+        icon: selectedIconValue,
+        goal: goalCount,
+        unit: unit,
+        current: 0
+    };
 
-    const reminder = reminderOn ? 'да' : 'нет';
-    const icon = selectedIconValue;
-
-    // Создаём карточку привычки
-    const habitsList = document.getElementById('habitsList');
-    const card = document.createElement('div');
-    card.className = 'habit-card';
-    card.innerHTML = `
-        <div class="habit-card-left">
-            <div class="habit-icon-small">${icon}</div>
-            <div class="habit-info">
-                <div class="habit-card-name">${name}</div>
-                <div class="habit-card-detail">${count} ${unit} · ${selectedDays}</div>
-                <div class="habit-card-detail">с ${day}.${String(month).padStart(2,'0')}.${year} · напом: ${reminder}</div>
-            </div>
-        </div>
-    `;
-    habitsList.appendChild(card);
-
+    habits.push(habit);
+    renderHabit(habit);
     closeModal();
 }
 
+// ===== ОТРИСОВКА ПРИВЫЧКИ =====
+function renderHabit(habit) {
+    const habitsList = document.getElementById('habitsList');
+
+    const card = document.createElement('div');
+    card.className = 'habit-card';
+    card.id = 'habit-' + habit.id;
+
+    card.innerHTML = `
+        <div class="habit-card-inner">
+
+            <!-- Иконка -->
+            <div class="habit-icon-circle">${habit.icon}</div>
+
+            <!-- Название + прогресс бар -->
+            <div class="habit-middle">
+                <div class="habit-name">${habit.name}</div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="bar-${habit.id}" style="width: 0%"></div>
+                </div>
+                <div class="habit-progress-text" id="text-${habit.id}">
+                    0 / ${habit.goal} ${habit.unit}
+                </div>
+            </div>
+
+            <!-- Кнопка плюс -->
+            <button class="plus-btn" onclick="incrementHabit(${habit.id})">＋</button>
+
+        </div>
+    `;
+
+    habitsList.appendChild(card);
+}
+
+// ===== УВЕЛИЧИТЬ СЧЁТЧИК =====
+function incrementHabit(id) {
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+
+    // Не превышаем цель
+    if (habit.current < habit.goal) {
+        habit.current++;
+    } else {
+        // Уже выполнено — сбрасываем
+        habit.current = 0;
+    }
+
+    updateHabitUI(habit);
+}
+
+// ===== ОБНОВИТЬ ИНТЕРФЕЙС ПРИВЫЧКИ =====
+function updateHabitUI(habit) {
+    const percent = Math.min((habit.current / habit.goal) * 100, 100);
+
+    const bar = document.getElementById('bar-' + habit.id);
+    const text = document.getElementById('text-' + habit.id);
+    const card = document.getElementById('habit-' + habit.id);
+
+    if (bar) bar.style.width = percent + '%';
+    if (text) text.textContent = `${habit.current} / ${habit.goal} ${habit.unit}`;
+
+    // Подсвечиваем карточку если выполнено
+    if (habit.current >= habit.goal) {
+        card.classList.add('completed');
+        bar.style.background = '#4CAF50';
+    } else {
+        card.classList.remove('completed');
+        bar.style.background = '#000';
+    }
+}
+
 // ===== НАВИГАЦИЯ =====
-function showPage(page) {
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    event.currentTarget.classList.add('active');
-    console.log("Открыта вкладка: " + page);
+function showPage(page, el) {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
 }
