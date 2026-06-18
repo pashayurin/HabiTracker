@@ -1,175 +1,149 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>HabiTracker</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabiTracker</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- МОДАЛКА ДОБАВЛЕНИЯ -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
-  <div class="modal-box">
+    <!-- ШАПКА СВЕРХУ -->
+    <header class="top-bar">
+        <h1 class="app-title">HabiTracker</h1>
+    </header>
 
-    <div class="modal-header">
-      <h2 class="modal-title">Добавить привычку</h2>
-      <button class="modal-close-btn" onclick="closeModal()">✕</button>
-    </div>
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="content">
+        <button class="add-habit-btn" onclick="openModal()">+ Добавить новую привычку</button>
+        <div class="habits-list" id="habitsList"></div>
+    </main>
 
-    <!-- Иконка + название -->
-    <div class="modal-top-row">
-      <div class="icon-circle" id="iconCircle" onclick="openIconPicker()">
-        <span id="selectedIcon">😊</span>
-        <span class="icon-circle-hint">▾</span>
-      </div>
-      <input type="text" class="habit-name-input" id="habitName"
-        placeholder="Название привычки" maxlength="30">
-    </div>
-
-    <!-- Пикер иконок -->
-    <div class="icon-picker" id="iconPicker">
-      <div class="icon-grid" id="iconGrid"></div>
-    </div>
-
-    <!-- Настройки -->
-    <div class="settings-block">
-
-      <div class="modal-row">
-        <span class="modal-row-label">Количество в день</span>
-        <input type="number" class="modal-small-input" id="habitCount"
-          value="1" min="1" max="999">
-      </div>
-      <div class="row-divider"></div>
-
-      <div class="modal-row">
-        <span class="modal-row-label">Единица измерения</span>
-        <select class="modal-select" id="habitUnit">
-          <option value="раз">РАЗ</option>
-          <option value="мин">МИН</option>
-          <option value="час">ЧАС</option>
-          <option value="км">КМ</option>
-          <option value="мл">МЛ</option>
-          <option value="стр">СТР</option>
-        </select>
-      </div>
-      <div class="row-divider"></div>
-
-      <div class="modal-row">
-        <span class="modal-row-label">Дата начала</span>
-        <div class="date-selects">
-          <select class="modal-select-sm" id="startDay"></select>
-          <select class="modal-select-sm" id="startMonth">
-            <option value="1">ЯНВ</option>
-            <option value="2">ФЕВ</option>
-            <option value="3">МАР</option>
-            <option value="4">АПР</option>
-            <option value="5">МАЙ</option>
-            <option value="6">ИЮН</option>
-            <option value="7">ИЮЛ</option>
-            <option value="8">АВГ</option>
-            <option value="9">СЕН</option>
-            <option value="10">ОКТ</option>
-            <option value="11">НОЯ</option>
-            <option value="12">ДЕК</option>
-          </select>
-          <select class="modal-select-sm" id="startYear"></select>
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+    <nav class="bottom-bar">
+        <div class="nav-item active" onclick="showPage('home')">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Главная</span>
         </div>
-      </div>
-      <div class="row-divider"></div>
-
-      <div class="modal-section">
-        <span class="modal-row-label">По каким дням недели</span>
-        <div class="days-row">
-          <button class="day-btn" data-day="ПН" onclick="toggleDay(this)">ПН</button>
-          <button class="day-btn" data-day="ВТ" onclick="toggleDay(this)">ВТ</button>
-          <button class="day-btn" data-day="СР" onclick="toggleDay(this)">СР</button>
-          <button class="day-btn" data-day="ЧТ" onclick="toggleDay(this)">ЧТ</button>
-          <button class="day-btn" data-day="ПТ" onclick="toggleDay(this)">ПТ</button>
-          <button class="day-btn" data-day="СБ" onclick="toggleDay(this)">СБ</button>
-          <button class="day-btn" data-day="ВС" onclick="toggleDay(this)">ВС</button>
-          <button class="day-btn day-btn-all" onclick="toggleAllDays(this)">ВСЕ</button>
+        <div class="nav-item" onclick="showPage('profile')">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Профиль</span>
         </div>
-      </div>
-      <div class="row-divider"></div>
-
-      <div class="modal-row">
-        <span class="modal-row-label">Напоминания</span>
-        <div class="reminder-row">
-          <span class="reminder-label" id="toggleLabel">Нет</span>
-          <div class="toggle-switch" id="reminderToggle" onclick="toggleReminder()">
-            <div class="toggle-thumb"></div>
-          </div>
+        <div class="nav-item" onclick="showPage('help')">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">Помощь</span>
         </div>
-      </div>
+    </nav>
 
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+        <div class="modal">
+
+            <h2 class="modal-title">Добавить привычку</h2>
+
+            <!-- ИКОНКА + НАЗВАНИЕ -->
+            <div class="modal-top-row">
+                <div class="icon-circle" id="iconCircle" onclick="openIconPicker()">
+                    <span id="selectedIcon">A</span>
+                </div>
+                <input type="text" class="habit-name-input" placeholder="название привычки" id="habitName">
+            </div>
+
+            <!-- ПИКЕР ИКОНОК -->
+            <div class="icon-picker" id="iconPicker">
+                <div class="icon-picker-grid" id="iconGrid"></div>
+            </div>
+
+            <!-- НАСТРОЙКИ -->
+            <div class="settings-box">
+
+                <!-- Количество в день -->
+                <div class="setting-row">
+                    <span class="setting-label">количество в день</span>
+                    <input type="number" class="setting-input-num" id="habitCount" placeholder="10" min="1">
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Единица измерения -->
+                <div class="setting-row">
+                    <span class="setting-label">единица измерения</span>
+                    <select class="setting-select" id="habitUnit">
+                        <option value="мин">МИН</option>
+                        <option value="час">ЧАС</option>
+                        <option value="раз">РАЗ</option>
+                        <option value="шт">ШТ</option>
+                        <option value="стр">СТР</option>
+                        <option value="км">КМ</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Дата начала -->
+                <div class="setting-row">
+                    <span class="setting-label">дата начала</span>
+                    <div class="date-inputs">
+                        <select class="date-select" id="startDay"></select>
+                        <select class="date-select" id="startMonth">
+                            <option value="1">ЯНВ</option>
+                            <option value="2">ФЕВ</option>
+                            <option value="3">МАР</option>
+                            <option value="4">АПР</option>
+                            <option value="5">МАЙ</option>
+                            <option value="6">ИЮН</option>
+                            <option value="7">ИЮЛ</option>
+                            <option value="8">АВГ</option>
+                            <option value="9">СЕН</option>
+                            <option value="10">ОКТ</option>
+                            <option value="11">НОЯ</option>
+                            <option value="12">ДЕК</option>
+                        </select>
+                        <select class="date-select" id="startYear"></select>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Дни недели -->
+                <div class="setting-row setting-row-wrap">
+                    <span class="setting-label">по каким дням недели</span>
+                    <div class="days-row">
+                        <button class="day-btn" data-day="пн" onclick="toggleDay(this)">ПН</button>
+                        <button class="day-btn" data-day="вт" onclick="toggleDay(this)">ВТ</button>
+                        <button class="day-btn" data-day="ср" onclick="toggleDay(this)">СР</button>
+                        <button class="day-btn" data-day="чт" onclick="toggleDay(this)">ЧТ</button>
+                        <button class="day-btn" data-day="пт" onclick="toggleDay(this)">ПТ</button>
+                        <button class="day-btn" data-day="сб" onclick="toggleDay(this)">СБ</button>
+                        <button class="day-btn" data-day="вс" onclick="toggleDay(this)">ВС</button>
+                        <button class="day-btn day-btn-all" onclick="toggleAllDays(this)">ВСЕ</button>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Напоминания -->
+                <div class="setting-row">
+                    <span class="setting-label">напоминания</span>
+                    <div class="toggle-wrap">
+                        <span class="toggle-label" id="toggleLabel">нет</span>
+                        <div class="toggle" id="reminderToggle" onclick="toggleReminder()">
+                            <div class="toggle-thumb"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- КНОПКИ -->
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+                <button class="btn-save" onclick="saveHabit()">Сохранить</button>
+            </div>
+
+        </div>
     </div>
 
-    <div class="modal-buttons">
-      <button class="btn-cancel" onclick="closeModal()">Отмена</button>
-      <button class="btn-save" onclick="saveHabit()">Сохранить</button>
-    </div>
-
-  </div>
-</div>
-
-<!-- ШАПКА: только логотип -->
-<header class="top-bar">
-  <h1 class="app-title">HabiTracker</h1>
-</header>
-
-<!-- ПОДШАПКА: переключатель дней -->
-<div class="date-bar">
-  <div class="date-nav">
-    <button class="date-nav-btn" onclick="changeDay(-1)">&#8249;</button>
-    <div class="date-nav-info">
-      <span class="date-nav-day" id="dateNavDay"></span>
-      <span class="date-nav-full" id="dateNavFull"></span>
-    </div>
-    <button class="date-nav-btn" onclick="changeDay(1)">&#8250;</button>
-  </div>
-</div>
-
-<!-- ОСНОВНОЙ КОНТЕНТ -->
-<main class="content">
-
-  <!-- Прогресс дня -->
-  <div class="day-progress-block">
-    <div class="day-progress-header">
-      <span class="day-progress-label">Прогресс дня</span>
-      <span class="day-progress-percent" id="dayProgressPercent">0%</span>
-    </div>
-    <div class="day-progress-bar-wrap">
-      <div class="day-progress-bar-fill" id="dayProgressFill"></div>
-    </div>
-    <div class="day-progress-sub" id="dayProgressSub">0 из 0 привычек выполнено</div>
-  </div>
-
-  <!-- Кнопка добавить -->
-  <button class="add-habit-btn" onclick="openModal()">
-    <span class="add-habit-icon">＋</span>
-    <span>Добавить новую привычку</span>
-  </button>
-
-  <div class="habits-list" id="habitsList"></div>
-</main>
-
-<!-- НИЖНЯЯ НАВИГАЦИЯ -->
-<nav class="bottom-bar">
-  <div class="nav-item active" id="nav-home" onclick="showPage('home')">
-    <span class="nav-icon">🏠</span>
-    <span class="nav-label">Главная</span>
-  </div>
-  <div class="nav-item" id="nav-profile" onclick="showPage('profile')">
-    <span class="nav-icon">👤</span>
-    <span class="nav-label">Профиль</span>
-  </div>
-  <div class="nav-item" id="nav-help" onclick="showPage('help')">
-    <span class="nav-icon">💬</span>
-    <span class="nav-label">Помощь</span>
-  </div>
-</nav>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
