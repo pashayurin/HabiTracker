@@ -1,341 +1,390 @@
-/* ===== ПЕРЕМЕННЫЕ ===== */
-:root {
-  --black: #111111;
-  --white: #ffffff;
-  --gray-light: #f2f3f7;
-  --gray-mid: #e0e0e6;
-  --gray-text: #9a9aaa;
-  --blue: #4f7fff;
-  --blue-light: #eef2ff;
-  --green: #34c759;
-  --green-light: #edfaf2;
-  --red: #ff3b30;
-  --radius: 18px;
-  --shadow: 0 4px 20px rgba(0,0,0,0.08);
-  --shadow-modal: 0 12px 48px rgba(0,0,0,0.22);
-
-  /* Высоты фиксированных панелей */
-  --topbar-h: 52px;
-  --datebar-h: 52px;
-  --bottombar-h: 65px;
-}
-
-/* ===== СБРОС ===== */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0; padding: 0;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
-  user-select: none;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  background: var(--gray-light);
-  color: var(--black);
-  /* отступ сверху = шапка + строка с датой */
-  padding-top: calc(var(--topbar-h) + var(--datebar-h));
-  padding-bottom: calc(var(--bottombar-h) + 10px);
-  touch-action: pan-x pan-y;
+    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+    color: #000000;
+    padding-top: 60px;
+    padding-bottom: 70px;
 }
 
-input, textarea, select {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-/* ===== ШАПКА (только логотип) ===== */
+/* ===== ШАПКА ===== */
 .top-bar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: var(--topbar-h);
-  background: var(--black);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
 }
 
 .app-title {
-  font-size: 22px;
-  font-weight: 800;
-  font-style: italic;
-  letter-spacing: 1px;
-  color: var(--white);
-}
-
-/* ===== СТРОКА С ДАТОЙ ===== */
-.date-bar {
-  position: fixed;
-  top: var(--topbar-h);
-  left: 0; right: 0;
-  height: var(--datebar-h);
-  background: var(--white);
-  border-bottom: 1px solid var(--gray-mid);
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.date-nav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  justify-content: center;
-  padding: 0 18px;
-}
-
-.date-nav-btn {
-  width: 34px; height: 34px;
-  border: 2px solid var(--gray-mid);
-  border-radius: 50%;
-  background: var(--gray-light);
-  font-size: 22px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, transform 0.1s;
-  flex-shrink: 0;
-  font-weight: bold;
-  color: var(--black);
-}
-.date-nav-btn:active {
-  background: var(--gray-mid);
-  transform: scale(0.9);
-}
-
-.date-nav-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 180px;
-}
-.date-nav-day {
-  font-size: 15px;
-  font-weight: 700;
-}
-.date-nav-full {
-  font-size: 12px;
-  color: var(--gray-text);
+    font-size: 22px;
+    font-weight: bold;
+    font-style: italic;
 }
 
 /* ===== КОНТЕНТ ===== */
 .content {
-  padding: 14px 14px 0;
-}
-
-/* ===== ПРОГРЕСС ДНЯ ===== */
-.day-progress-block {
-  background: var(--white);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow);
-}
-
-.day-progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.day-progress-label {
-  font-size: 14px;
-  font-weight: 700;
-}
-.day-progress-percent {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--blue);
-}
-.day-progress-bar-wrap {
-  width: 100%;
-  height: 10px;
-  background: var(--gray-mid);
-  border-radius: 99px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-.day-progress-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--blue), #a259ff);
-  border-radius: 99px;
-  transition: width 0.5s cubic-bezier(.4,0,.2,1);
-  width: 0%;
-}
-.day-progress-sub {
-  font-size: 12px;
-  color: var(--gray-text);
+    padding: 20px;
+    min-height: calc(100vh - 130px);
 }
 
 /* ===== КНОПКА ДОБАВИТЬ ===== */
 .add-habit-btn {
-  width: 100%;
-  padding: 16px 18px;
-  font-size: 16px;
-  font-weight: 700;
-  background: var(--blue);
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-  color: var(--white);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: opacity 0.15s, transform 0.1s;
-  box-shadow: 0 4px 16px rgba(79,127,255,0.35);
-  letter-spacing: 0.2px;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-style: italic;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: #000000;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 10px;
 }
-.add-habit-btn:active {
-  opacity: 0.85;
-  transform: scale(0.98);
-}
-.add-habit-icon {
-  font-size: 22px;
-  font-weight: 300;
-  line-height: 1;
-}
+.add-habit-btn:active { opacity: 0.6; }
 
-/* ===== ПУСТОЕ СООБЩЕНИЕ ===== */
-.empty-msg {
-  text-align: center;
-  color: var(--gray-text);
-  font-size: 15px;
-  padding: 40px 0;
-}
-
-/* ===== СПИСОК ПРИВЫЧЕК ===== */
-.habits-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* ===== КАРТОЧКА ===== */
+/* ===== КАРТОЧКИ ПРИВЫЧЕК ===== */
 .habit-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border-radius: var(--radius);
-  background: var(--white);
-  box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e0e0e0;
 }
-.habit-card.completed {
-  background: var(--green-light);
+.habit-card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.habit-card.completed .habit-card-name {
-  color: var(--green);
-}
-
-.habit-icon-circle {
-  width: 52px; height: 52px; min-width: 52px;
-  border-radius: 50%;
-  border: 2px solid var(--gray-mid);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  background: var(--gray-light);
-  flex-shrink: 0;
-}
-.habit-icon-circle.done {
-  border-color: var(--green);
-  background: var(--green-light);
-}
-
-.habit-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+.habit-icon-small {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    flex-shrink: 0;
 }
 .habit-card-name {
-  font-size: 15px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: 15px;
+    font-weight: bold;
+}
+.habit-card-detail {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
 }
 
-.habit-progress-bar {
-  position: relative;
-  width: 100%;
-  height: 20px;
-  background: var(--gray-mid);
-  border-radius: 99px;
-  overflow: hidden;
+/* ===== НИЖНЯЯ НАВИГАЦИЯ ===== */
+.bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 65px;
+    background-color: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 1000;
 }
-.habit-progress-fill {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  background: linear-gradient(90deg, var(--blue), #a259ff);
-  border-radius: 99px;
-  transition: width 0.35s ease;
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 8px 20px;
+    border-radius: 10px;
+    transition: opacity 0.2s;
 }
-.habit-progress-text {
-  position: absolute;
-  left: 0; right: 0; top: 50%;
-  transform: translateY(-50%);
-  text-align: center;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--white);
-  mix-blend-mode: difference;
-  pointer-events: none;
-  z-index: 1;
+.nav-item:active { opacity: 0.5; }
+.nav-icon { font-size: 22px; }
+.nav-label {
+    font-size: 12px;
+    color: #888888;
+    font-style: italic;
 }
-
-.habit-plus-btn {
-  width: 42px; height: 42px; min-width: 42px;
-  border-radius: 50%;
-  border: 2px solid var(--blue);
-  background: var(--white);
-  font-size: 26px;
-  font-weight: 300;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--blue);
-  transition: background 0.15s, transform 0.1s;
-}
-.habit-plus-btn:active {
-  background: var(--blue-light);
-  transform: scale(0.88);
-}
-.habit-plus-btn.done {
-  border-color: var(--green);
-  color: var(--green);
+.nav-item.active .nav-label {
+    color: #000000;
+    font-weight: bold;
 }
 
-.habit-del-btn {
-  width: 28px; height: 28px; min-width: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--gray-mid);
-  background: var(--white);
-  font-size: 12px;
-  color: var(--gray-text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 2000;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px 0 40px;
 }
-.habit-del-btn:active {
-  background: #ffe0e0;
-  color: var(--red);
-  border-color: var(--red);
+.modal-overlay.active {
+    display: flex;
+}
+.modal {
+    background: #ffffff;
+    width: 92%;
+    max-width: 400px;
+    border-radius: 16px;
+    padding: 20px;
+    margin: auto;
 }
 
-/* ===== НИЖ
+/* Заголовок */
+.modal-title {
+    font-size: 18px;
+    font-weight: bold;
+    font-style: italic;
+    margin-bottom: 16px;
+}
+
+/* Верхняя строка: иконка + название */
+.modal-top-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+.icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+    transition: background 0.2s;
+}
+.icon-circle:active { background: #f0f0f0; }
+
+.habit-name-input {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-style: italic;
+    border: 1.5px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+}
+.habit-name-input:focus { border-color: #000; }
+
+/* Пикер иконок */
+.icon-picker {
+    display: none;
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 12px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+.icon-picker.open { display: block; }
+
+.icon-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+.icon-option {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.icon-option:active { background: #e0e0e0; }
+
+/* Блок настроек */
+.settings-box {
+    border: 1.5px solid #ccc;
+    border-radius: 14px;
+    padding: 6px 14px;
+    margin-bottom: 20px;
+}
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    gap: 10px;
+}
+.setting-row-wrap {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.setting-label {
+    font-size: 14px;
+    font-style: italic;
+    color: #333;
+    flex-shrink: 0;
+}
+.divider {
+    height: 1px;
+    background: #e0e0e0;
+}
+
+/* Числовой инпут */
+.setting-input-num {
+    width: 70px;
+    padding: 6px 10px;
+    font-size: 15px;
+    font-weight: bold;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    text-align: right;
+    outline: none;
+}
+.setting-input-num:focus { border-color: #000; }
+
+/* Селект единицы */
+.setting-select {
+    padding: 6px 8px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Дата */
+.date-inputs {
+    display: flex;
+    gap: 6px;
+}
+.date-select {
+    padding: 6px 4px;
+    font-size: 13px;
+    font-weight: bold;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Дни недели */
+.days-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+.day-btn {
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.day-btn.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+.day-btn-all {
+    background: #f0f0f0;
+}
+.day-btn-all.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+/* Тоггл напоминаний */
+.toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.toggle-label {
+    font-size: 14px;
+    font-style: italic;
+    color: #888;
+    min-width: 24px;
+    text-align: right;
+}
+.toggle {
+    width: 48px;
+    height: 26px;
+    background: #ccc;
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s;
+}
+.toggle.on { background: #000; }
+.toggle-thumb {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: left 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle.on .toggle-thumb { left: 25px; }
+
+/* Кнопки модалки */
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+}
+.btn-cancel {
+    flex: 1;
+    padding: 12px;
+    font-size: 15px;
+    font-style: italic;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.btn-cancel:active { opacity: 0.7; }
+
+.btn-save {
+    flex: 1;
+    padding: 12px;
+    font-size: 15px;
+    font-style: italic;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.btn-save:active { opacity: 0.7; }
