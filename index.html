@@ -74,26 +74,32 @@
                 <div class="divider"></div>
 
                 <div class="setting-row">
-                    <span class="setting-label">дата начала</span>
-                    <div class="date-inputs">
-                        <select class="date-select" id="startDay"></select>
-                        <select class="date-select" id="startMonth">
-                            <option value="1">ЯНВ</option>
-                            <option value="2">ФЕВ</option>
-                            <option value="3">МАР</option>
-                            <option value="4">АПР</option>
-                            <option value="5">МАЙ</option>
-                            <option value="6">ИЮН</option>
-                            <option value="7">ИЮЛ</option>
-                            <option value="8">АВГ</option>
-                            <option value="9">СЕН</option>
-                            <option value="10">ОКТ</option>
-                            <option value="11">НОЯ</option>
-                            <option value="12">ДЕК</option>
-                        </select>
-                        <select class="date-select" id="startYear"></select>
-                    </div>
-                </div>
+    <span class="setting-label">дата начала</span>
+    <div class="date-inputs">
+
+        <!-- ДЕНЬ -->
+        <div class="custom-select-wrap">
+            <button class="date-arrow" onclick="changeDate('day', -1)">‹</button>
+            <span class="date-value" id="startDay">1</span>
+            <button class="date-arrow" onclick="changeDate('day', 1)">›</button>
+        </div>
+
+        <!-- МЕСЯЦ -->
+        <div class="custom-select-wrap">
+            <button class="date-arrow" onclick="changeDate('month', -1)">‹</button>
+            <span class="date-value" id="startMonth">ЯНВ</span>
+            <button class="date-arrow" onclick="changeDate('month', 1)">›</button>
+        </div>
+
+        <!-- ГОД -->
+        <div class="custom-select-wrap">
+            <button class="date-arrow" onclick="changeDate('year', -1)">‹</button>
+            <span class="date-value" id="startYear">2025</span>
+            <button class="date-arrow" onclick="changeDate('year', 1)">›</button>
+        </div>
+
+    </div>
+</div>
 
                 <div class="divider"></div>
 
