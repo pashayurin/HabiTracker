@@ -12,47 +12,32 @@
     <h1 class="app-title">HabiTracker</h1>
 </header>
 
-<!-- ===== СТРАНИЦА ГЛАВНАЯ ===== -->
+<!-- ===== ГЛАВНАЯ ===== -->
 <main class="content page active" id="page-home">
-
     <div class="date-nav-bar">
         <button class="date-nav-arrow" onclick="changeMainDate(-1)">&#8249;</button>
         <span class="date-nav-label" id="mainDateLabel"></span>
         <button class="date-nav-arrow" onclick="changeMainDate(1)">&#8250;</button>
     </div>
-
     <button class="add-habit-btn" onclick="openModal()">+ Добавить новую привычку</button>
     <div class="habits-list" id="habitsList"></div>
-
 </main>
 
-<!-- ===== СТРАНИЦА ПРОФИЛЬ ===== -->
+<!-- ===== ПРОФИЛЬ ===== -->
 <main class="content page" id="page-profile">
-
     <div class="profile-box">
 
-        <!-- Аватар -->
         <div class="profile-avatar" id="profileAvatar">👤</div>
 
-        <!-- Если не вошёл -->
+        <!-- Гость -->
         <div id="profileGuest">
             <p class="profile-hint">Войдите через Telegram,<br>чтобы сохранять привычки</p>
-
-            <!-- Telegram Login Widget -->
-            <div id="telegramLoginWrap">
-                <script
-                    async
-                    src="https://telegram.org/js/telegram-widget.js?22"
-                    data-telegram-login="habitrackkbot"
-                    data-size="large"
-                    data-radius="10"
-                    data-onauth="onTelegramAuth(user)"
-                    data-request-access="write">
-                </script>
-            </div>
+            <button class="btn-tg-login" onclick="fakeTelegramLogin()">
+                <span>✈️</span> Войти через Telegram
+            </button>
         </div>
 
-        <!-- Если вошёл -->
+        <!-- Вошёл -->
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername">—</p>
@@ -62,20 +47,18 @@
                     <span class="stat-label">привычек</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-num" id="statStreak">0</span>
-                    <span class="stat-label">дней подряд</span>
+                    <span class="stat-num" id="statDone">0</span>
+                    <span class="stat-label">выполнено сегодня</span>
                 </div>
             </div>
             <button class="btn-logout" onclick="logout()">Выйти</button>
         </div>
 
     </div>
-
 </main>
 
-<!-- ===== СТРАНИЦА ПОМОЩЬ ===== -->
+<!-- ===== ПОМОЩЬ ===== -->
 <main class="content page" id="page-help">
-
     <div class="help-box">
         <h2 class="help-title">Помощь</h2>
         <div class="help-item">
@@ -103,7 +86,7 @@
             <span class="help-icon">📅</span>
             <div>
                 <p class="help-q">Как посмотреть другой день?</p>
-                <p class="help-a">Используйте стрелки «‹ ›» рядом с датой</p>
+                <p class="help-a">Используйте стрелки «‹ ›» рядом с датой на главном экране</p>
             </div>
         </div>
         <div class="help-item">
@@ -114,10 +97,9 @@
             </div>
         </div>
     </div>
-
 </main>
 
-<!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
+<!-- ===== НАВИГАЦИЯ ===== -->
 <nav class="bottom-bar">
     <div class="nav-item active" onclick="showPage('home', this)">
         <span class="nav-icon">🏠</span>
@@ -133,7 +115,7 @@
     </div>
 </nav>
 
-<!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
+<!-- ===== МОДАЛКА ===== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal">
 
@@ -156,7 +138,6 @@
                 <span class="setting-label">количество в день</span>
                 <input type="number" class="setting-input-num" id="habitCount" placeholder="10" min="1">
             </div>
-
             <div class="divider"></div>
 
             <div class="setting-row">
@@ -170,7 +151,6 @@
                     <option value="км">КМ</option>
                 </select>
             </div>
-
             <div class="divider"></div>
 
             <div class="setting-row">
@@ -193,7 +173,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="divider"></div>
 
             <div class="setting-row setting-row-wrap">
@@ -209,7 +188,6 @@
                     <button class="day-btn day-btn-all" onclick="toggleAllDays(this)">ВСЕ</button>
                 </div>
             </div>
-
             <div class="divider"></div>
 
             <div class="setting-row">
