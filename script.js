@@ -3,29 +3,26 @@ if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand();
 }
 
+// ===== БЕЗОПАСНЫЙ localStorage =====
+function lsGet(key, fallback) {
+    try {
+        return JSON.parse(localStorage.getItem(key) || fallback);
+    } catch(e) {
+        return JSON.parse(fallback);
+    }
+}
+function lsSet(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch(e) {}
+}
+
 // ===== КОНСТАНТЫ =====
-const MONTHS = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
+const MONTHS      = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
 const MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const DAYS_RU = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
-const DAYS_FULL = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
-const DAY_KEYS = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
-
-// ===== СОСТОЯНИЕ =====
-let habits = JSON.parse(localStorage.getItem('habits') || '[]');
-let selectedIconValue = 'A';
-let reminderOn = false;
-let iconPickerOpen = false;
-
-// Текущая выбранная дата на главном экране
-let currentDate = new Date();
-currentDate.setHours(0,0,0,0);
-
-// Дата в модалке
-const dateState = {
-    day: new Date().getDate(),
-    month: new Date().getMonth(),
-    year: new Date().getFullYear()
-};
+const DAYS_FULL   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const DAY_KEYS    = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+const DAYS_IN_MONTH = [31,28,29,31,30,31,30,31,31,30,31,30,31];
 
 // ===== ИКОНКИ =====
 const ICONS = [
@@ -36,11 +33,64 @@ const ICONS = [
     '📖','🖊️','🎹','🏄','🧗','🌙','⭐','🔥'
 ];
 
-// ===== ПРОГРЕСС =====
-let progress = JSON.parse(localStorage.getItem('progress') || '{}');
+// ===== СОСТОЯНИЕ =====
+let habits      = lsGet('habits', '[]');
+let progress    = lsGet('progress', '{}');
+let currentUser = lsGet('tgUser', 'null');
 
-// ===== ПОЛЬЗОВАТЕЛЬ =====
-let currentUser = JSON.parse(localStorage.getItem('tgUser') || 'null');
+let selectedIconValue = '⭐';
+let reminderOn        = false;
+let iconPickerOpen    = false;
+
+// Текущая дата главного экрана
+let currentDate = new Date();
+currentDate.setHours(0, 0, 0, 0);
+
+// Дата в модалке
+const dateState = {
+    day:   new Date().getDate(),
+    month: new Date().getMonth(),
+    year:  new Date().getFullYear()
+};
+
+// ===== УТИЛИТЫ ДАТЫ =====
+function dateKey(d) {
+    const y   = d.getFullYear();
+    const m   = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function formatMainDate(d) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const dateStr = d.getDate() + ' ' + MONTHS_FULL[d.getMonth()];
+
+    if (d.getTime() === today.getTime())     return 'Сегодня, ' + dateStr;
+    if (d.getTime() === yesterday.getTime()) return 'Вчера, ' + dateStr;
+    if (d.getTime() === tomorrow.getTime())  return 'Завтра, ' + dateStr;
+
+    return DAYS_FULL[d.getDay()] + ', ' + dateStr;
+}
+
+// ===== ДАТА ГЛАВНОГО ЭКРАНА =====
+function renderDateLabel() {
+    const el = document.getElementById('mainDateLabel');
+    if (el) el.textContent = formatMainDate(currentDate);
+}
+
+function changeMainDate(dir) {
+    currentDate.setDate(currentDate.getDate() + dir);
+    renderDateLabel();
+    renderHabits();
+}
 
 // ===== НАВИГАЦИЯ =====
 function showPage(name, el) {
@@ -51,48 +101,14 @@ function showPage(name, el) {
     if (name === 'profile') renderProfile();
 }
 
-// ===== ДАТА ГЛАВНОГО ЭКРАНА =====
-function dateKey(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
-
-function formatMainDate(d) {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-
-    const dayName = DAYS_FULL[d.getDay()];
-    const dateStr = d.getDate() + ' ' + MONTHS_FULL[d.getMonth()];
-
-    if (d.getTime() === today.getTime()) return 'Сегодня, ' + dateStr;
-    if (d.getTime() === yesterday.getTime()) return 'Вчера, ' + dateStr;
-    if (d.getTime() === tomorrow.getTime()) return 'Завтра, ' + dateStr;
-    return dayName + ', ' + dateStr;
-}
-
-function renderDateLabel() {
-    document.getElementById('mainDateLabel').textContent = formatMainDate(currentDate);
-}
-
-function changeMainDate(dir) {
-    currentDate.setDate(currentDate.getDate() + dir);
-    renderDateLabel();
-    renderHabits();
-}
-
 // ===== РЕНДЕР ПРИВЫЧЕК =====
 function renderHabits() {
     const list = document.getElementById('habitsList');
-    const key = dateKey(currentDate);
+    if (!list) return;
+
+    const key          = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-    const dayIndex = currentDate.getDay();
-    const currentDay = DAY_KEYS[dayIndex];
+    const currentDay   = DAY_KEYS[currentDate.getDay()];
 
     const filtered = habits.filter(h => {
         if (!h.days || h.days.length === 0) return true;
@@ -105,9 +121,9 @@ function renderHabits() {
     }
 
     list.innerHTML = filtered.map(h => {
-        const done = todayProgress[h.id] || 0;
-        const total = h.count || 1;
-        const pct = Math.min(100, Math.round((done / total) * 100));
+        const done      = todayProgress[h.id] || 0;
+        const total     = h.count || 1;
+        const pct       = Math.min(100, Math.round((done / total) * 100));
         const completed = done >= total;
         return `
         <div class="habit-card ${completed ? 'completed' : ''}" id="card-${h.id}">
@@ -130,35 +146,35 @@ function renderHabits() {
 }
 
 function addProgress(id) {
-    const key = dateKey(currentDate);
+    const key   = dateKey(currentDate);
     if (!progress[key]) progress[key] = {};
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
     const current = progress[key][id] || 0;
     if (current < habit.count) {
         progress[key][id] = current + 1;
-        localStorage.setItem('progress', JSON.stringify(progress));
+        lsSet('progress', progress);
         renderHabits();
     }
 }
 
 function deleteHabit(id) {
     habits = habits.filter(h => h.id !== id);
-    localStorage.setItem('habits', JSON.stringify(habits));
+    lsSet('habits', habits);
     renderHabits();
 }
 
 // ===== МОДАЛКА =====
 function openModal() {
-    const now = new Date();
-    dateState.day = now.getDate();
+    const now      = new Date();
+    dateState.day   = now.getDate();
     dateState.month = now.getMonth();
-    dateState.year = now.getFullYear();
+    dateState.year  = now.getFullYear();
     updateDateDisplay();
 
-    document.getElementById('habitName').value = '';
+    document.getElementById('habitName').value  = '';
     document.getElementById('habitCount').value = '';
-    document.getElementById('habitUnit').value = 'раз';
+    document.getElementById('habitUnit').value  = 'раз';
 
     selectedIconValue = '⭐';
     document.getElementById('selectedIcon').textContent = '⭐';
@@ -208,11 +224,9 @@ function selectIcon(ic) {
 }
 
 // ===== ДАТА В МОДАЛКЕ =====
-const DAYS_IN_MONTH = [31,28,29,31,30,31,30,31,31,30,31,30,31];
-
 function changeDate(type, dir) {
     if (type === 'day') {
-        const max = DAYS_IN_MONTH[dateState.month];
+        const max    = DAYS_IN_MONTH[dateState.month];
         dateState.day = ((dateState.day - 1 + dir + max) % max) + 1;
     } else if (type === 'month') {
         dateState.month = (dateState.month + 12 + dir) % 12;
@@ -225,9 +239,9 @@ function changeDate(type, dir) {
 }
 
 function updateDateDisplay() {
-    document.getElementById('startDay').textContent = dateState.day;
+    document.getElementById('startDay').textContent   = dateState.day;
     document.getElementById('startMonth').textContent = MONTHS[dateState.month];
-    document.getElementById('startYear').textContent = dateState.year;
+    document.getElementById('startYear').textContent  = dateState.year;
 }
 
 // ===== ДНИ НЕДЕЛИ =====
@@ -236,7 +250,7 @@ function toggleDay(btn) {
 }
 
 function toggleAllDays(btn) {
-    const dayBtns = document.querySelectorAll('.day-btn:not(.day-btn-all)');
+    const dayBtns  = document.querySelectorAll('.day-btn:not(.day-btn-all)');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
     dayBtns.forEach(b => {
         if (allActive) b.classList.remove('active');
@@ -247,16 +261,14 @@ function toggleAllDays(btn) {
 // ===== НАПОМИНАНИЕ =====
 function toggleReminder() {
     reminderOn = !reminderOn;
-    const toggle = document.getElementById('reminderToggle');
-    const label = document.getElementById('toggleLabel');
-    toggle.classList.toggle('on', reminderOn);
-    label.textContent = reminderOn ? 'да' : 'нет';
+    document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
+    document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
 }
 
 // ===== СОХРАНИТЬ ПРИВЫЧКУ =====
 function saveHabit() {
     const nameInput = document.getElementById('habitName');
-    const name = nameInput.value.trim();
+    const name      = nameInput.value.trim();
 
     if (!name) {
         nameInput.focus();
@@ -266,103 +278,97 @@ function saveHabit() {
     }
 
     const count = parseInt(document.getElementById('habitCount').value) || 1;
-    const unit = document.getElementById('habitUnit').value;
-    const icon = selectedIconValue || '⭐';
+    const unit  = document.getElementById('habitUnit').value;
+    const icon  = selectedIconValue || '⭐';
 
     const activeDays = [...document.querySelectorAll('.day-btn:not(.day-btn-all).active')]
         .map(b => b.textContent);
 
     const startMonth = String(dateState.month + 1).padStart(2, '0');
-    const startDay = String(dateState.day).padStart(2, '0');
+    const startDay   = String(dateState.day).padStart(2, '0');
 
     const habit = {
-        id: Date.now().toString(),
+        id:        Date.now().toString(),
         name,
         icon,
         count,
         unit,
-        reminder: reminderOn,
-        days: activeDays,
+        reminder:  reminderOn,
+        days:      activeDays,
         startDate: `${dateState.year}-${startMonth}-${startDay}`
     };
 
     habits.push(habit);
-    localStorage.setItem('habits', JSON.stringify(habits));
+    lsSet('habits', habits);
     closeModal();
     renderHabits();
 }
 
 // ===== ПРОФИЛЬ =====
 function renderProfile() {
-    const guest = document.getElementById('profileGuest');
-    const user = document.getElementById('profileUser');
-    const avatar = document.getElementById('profileAvatar');
+    const guestEl  = document.getElementById('profileGuest');
+    const userEl   = document.getElementById('profileUser');
+    const avatarEl = document.getElementById('profileAvatar');
 
     if (currentUser) {
-        guest.style.display = 'none';
-        user.style.display = 'flex';
-        user.style.flexDirection = 'column';
-        user.style.alignItems = 'center';
-        user.style.gap = '12px';
+        guestEl.style.display = 'none';
+        userEl.style.display  = 'flex';
 
         const fullName = ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim();
-        document.getElementById('profileName').textContent = fullName || 'Пользователь';
+        document.getElementById('profileName').textContent     = fullName || 'Пользователь';
         document.getElementById('profileUsername').textContent =
             currentUser.username ? '@' + currentUser.username : '';
 
         if (currentUser.photo_url) {
-            avatar.innerHTML = '<img src="' + currentUser.photo_url + '" alt="avatar">';
+            avatarEl.innerHTML = `<img src="${currentUser.photo_url}" alt="avatar">`;
         } else {
-            avatar.textContent = '👤';
+            avatarEl.textContent = '👤';
         }
 
-        const today = dateKey(new Date());
-        const todayProg = progress[today] || {};
-        let doneToday = 0;
+        const todayKey  = dateKey(new Date());
+        const todayProg = progress[todayKey] || {};
+        let doneToday   = 0;
         habits.forEach(h => {
             if ((todayProg[h.id] || 0) >= h.count) doneToday++;
         });
 
         document.getElementById('statTotal').textContent = habits.length;
-        document.getElementById('statDone').textContent = doneToday;
+        document.getElementById('statDone').textContent  = doneToday;
 
     } else {
-        guest.style.display = 'flex';
-        guest.style.flexDirection = 'column';
-        guest.style.alignItems = 'center';
-        guest.style.gap = '12px';
-        user.style.display = 'none';
-        avatar.textContent = '👤';
+        guestEl.style.display = 'flex';
+        userEl.style.display  = 'none';
+        avatarEl.textContent  = '👤';
     }
 }
 
 function fakeTelegramLogin() {
     currentUser = {
-        id: 123456789,
+        id:         123456789,
         first_name: 'Пользователь',
-        last_name: '',
-        username: 'username',
-        photo_url: null
+        last_name:  '',
+        username:   'username',
+        photo_url:  null
     };
-    localStorage.setItem('tgUser', JSON.stringify(currentUser));
+    lsSet('tgUser', currentUser);
     renderProfile();
 }
 
 function onTelegramAuth(user) {
     currentUser = user;
-    localStorage.setItem('tgUser', JSON.stringify(currentUser));
+    lsSet('tgUser', currentUser);
     renderProfile();
 }
 
 function logout() {
     currentUser = null;
-    localStorage.removeItem('tgUser');
+    try { localStorage.removeItem('tgUser'); } catch(e) {}
     renderProfile();
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-document.addEventListener('DOMContentLoaded', () => {
+window.onload = function() {
     renderDateLabel();
     renderHabits();
     if (currentUser) renderProfile();
-});
+};
