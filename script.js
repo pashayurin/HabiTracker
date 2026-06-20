@@ -1,12 +1,31 @@
-// ===== TELEGRAM =====
+// ===== TELEGRAM INIT =====
 if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand();
 }
 
+// ===== СБРОС СТАРОГО МУСОРА =====
+// Удаляем старого сохранённого пользователя-заглушку
+(function cleanOldUser() {
+    try {
+        const saved = localStorage.getItem('tgUser');
+        if (saved) {
+            const u = JSON.parse(saved);
+            // Если это заглушка (id=0 или first_name='Гость' или 'Пользователь')
+            if (!u || u.id === 0 || u.first_name === 'Гость' || u.first_name === 'Пользователь') {
+                localStorage.removeItem('tgUser');
+            }
+        }
+    } catch(e) {
+        localStorage.removeItem('tgUser');
+    }
+})();
+
 // ===== БЕЗОПАСНЫЙ localStorage =====
 function lsGet(key, fallback) {
     try {
-        return JSON.parse(localStorage.getItem(key) || fallback);
+        const val = localStorage.getItem(key);
+        if (val === null || val === undefined) return JSON.parse(fallback);
+        return JSON.parse(val);
     } catch(e) {
         return JSON.parse(fallback);
     }
@@ -36,10 +55,22 @@ const ICONS = [
 // ===== СОСТОЯНИЕ =====
 let habits   = lsGet('habits', '[]');
 let progress = lsGet('progress', '{}');
-
-// Пытаемся получить пользователя из Telegram WebApp
 let currentUser = null;
 
+let selectedIconValue = '⭐';
+let reminderOn        = false;
+let iconPickerOpen    = false;
+
+let currentDate = new Date();
+currentDate.setHours(0, 0, 0, 0);
+
+const dateState = {
+    day:   new Date().getDate(),
+    month: new Date().getMonth(),
+    year:  new Date().getFullYear()
+};
+
+// ===== ПОЛУЧИТЬ ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM =====
 function tryGetTelegramUser() {
     try {
         if (
@@ -48,26 +79,54 @@ function tryGetTelegramUser() {
             window.Telegram.WebApp.initDataUnsafe &&
             window.Telegram.WebApp.initDataUnsafe.user
         ) {
-            return window.Telegram.WebApp.initDataUnsafe.user;
+            const u = window.Telegram.WebApp.initDataUnsafe.user;
+            // Проверяем что это реальный пользователь
+            if (u && u.id && u.id !== 0) {
+                return u;
+            }
         }
     } catch(e) {}
     return null;
 }
 
-let selectedIconValue = '⭐';
-let reminderOn        = false;
-let iconPickerOpen    = false;
+// ===== АВТОВХОД =====
+function tryAutoLogin() {
+    // Сначала пробуем реальный Telegram
+    const tgUser = tryGetTelegramUser();
+    if (tgUser) {
+        currentUser = tgUser;
+        lsSet('tgUser', currentUser);
+        return;
+    }
+    // Иначе проверяем сохранённого реального пользователя
+    const saved = lsGet('tgUser', 'null');
+    if (saved && saved.id && saved.id !== 0) {
+        currentUser = saved;
+    } else {
+        currentUser = null;
+    }
+}
 
-// Текущая дата главного экрана
-let currentDate = new Date();
-currentDate.setHours(0, 0, 0, 0);
+// ===== КНОПКА ВОЙТИ =====
+function fakeTelegramLogin() {
+    const tgUser = tryGetTelegramUser();
+    if (tgUser) {
+        // Реальный пользователь из Telegram
+        currentUser = tgUser;
+        lsSet('tgUser', currentUser);
+    } else {
+        // Открыто в браузере — показываем сообщение
+        alert('Откройте приложение через бота @habitrackkbot в Telegram');
+        return;
+    }
+    renderProfile();
+}
 
-// Дата в модалке
-const dateState = {
-    day:   new Date().getDate(),
-    month: new Date().getMonth(),
-    year:  new Date().getFullYear()
-};
+function logout() {
+    currentUser = null;
+    try { localStorage.removeItem('tgUser'); } catch(e) {}
+    renderProfile();
+}
 
 // ===== УТИЛИТЫ ДАТЫ =====
 function dateKey(d) {
@@ -80,23 +139,17 @@ function dateKey(d) {
 function formatMainDate(d) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-
     const dateStr = d.getDate() + ' ' + MONTHS_FULL[d.getMonth()];
-
     if (d.getTime() === today.getTime())     return 'Сегодня, ' + dateStr;
     if (d.getTime() === yesterday.getTime()) return 'Вчера, ' + dateStr;
     if (d.getTime() === tomorrow.getTime())  return 'Завтра, ' + dateStr;
-
     return DAYS_FULL[d.getDay()] + ', ' + dateStr;
 }
 
-// ===== ДАТА ГЛАВНОГО ЭКРАНА =====
 function renderDateLabel() {
     const el = document.getElementById('mainDateLabel');
     if (el) el.textContent = formatMainDate(currentDate);
@@ -218,7 +271,7 @@ function closeModalOutside(e) {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
-// ===== ИКОНКИ В МОДАЛКЕ =====
+// ===== ИКОНКИ =====
 function buildIconGrid() {
     const grid = document.getElementById('iconGrid');
     grid.innerHTML = ICONS.map(ic =>
@@ -326,20 +379,23 @@ function renderProfile() {
     const userEl   = document.getElementById('profileUser');
     const avatarEl = document.getElementById('profileAvatar');
 
-    if (currentUser) {
+    if (currentUser && currentUser.id && currentUser.id !== 0) {
         guestEl.style.display = 'none';
         userEl.style.display  = 'flex';
 
-        const fullName = ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim();
-        document.getElementById('profileName').textContent     = fullName || 'Пользователь';
-        document.getElementById('profileUsername').textContent =
-            currentUser.username ? '@' + currentUser.username : '';
+        const firstName = currentUser.first_name || '';
+        const lastName  = currentUser.last_name  || '';
+        const fullName  = (firstName + ' ' + lastName).trim();
+
+        document.getElementById('profileName').textContent = fullName || 'Пользователь';
+
+        const usernameEl = document.getElementById('profileUsername');
+        usernameEl.textContent = currentUser.username ? '@' + currentUser.username : '';
 
         if (currentUser.photo_url) {
             avatarEl.innerHTML = `<img src="${currentUser.photo_url}" alt="avatar">`;
         } else {
-            // Берём первую букву имени как аватар
-            const letter = (currentUser.first_name || 'П')[0].toUpperCase();
+            const letter = (firstName || 'П')[0].toUpperCase();
             avatarEl.innerHTML = `
                 <div style="
                     width:100%;height:100%;
@@ -362,51 +418,9 @@ function renderProfile() {
     } else {
         guestEl.style.display = 'flex';
         userEl.style.display  = 'none';
+        avatarEl.innerHTML    = '';
         avatarEl.textContent  = '👤';
     }
-}
-
-// Вход: сначала пробуем Telegram, иначе показываем кнопку
-function tryAutoLogin() {
-    const tgUser = tryGetTelegramUser();
-    if (tgUser) {
-        currentUser = tgUser;
-        lsSet('tgUser', currentUser);
-    } else {
-        // Проверяем сохранённого пользователя
-        currentUser = lsGet('tgUser', 'null');
-    }
-}
-
-// Кнопка "Войти" — показывает заглушку если нет реального Telegram
-function fakeTelegramLogin() {
-    const tgUser = tryGetTelegramUser();
-    if (tgUser) {
-        currentUser = tgUser;
-    } else {
-        // Заглушка только если не в Telegram
-        currentUser = {
-            id:         0,
-            first_name: 'Гость',
-            last_name:  '',
-            username:   null,
-            photo_url:  null
-        };
-    }
-    lsSet('tgUser', currentUser);
-    renderProfile();
-}
-
-function onTelegramAuth(user) {
-    currentUser = user;
-    lsSet('tgUser', currentUser);
-    renderProfile();
-}
-
-function logout() {
-    currentUser = null;
-    try { localStorage.removeItem('tgUser'); } catch(e) {}
-    renderProfile();
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
