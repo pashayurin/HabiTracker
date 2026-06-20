@@ -39,13 +39,11 @@ body {
 .page.active {
     display: block;
 }
-
-/* ===== КОНТЕНТ ===== */
 .content {
     padding: 16px;
 }
 
-/* ===== СТРОКА ДАТЫ ===== */
+/* ===== ДАТА НА ГЛАВНОЙ ===== */
 .date-nav-bar {
     display: flex;
     align-items: center;
@@ -192,7 +190,7 @@ body {
 }
 .delete-btn:active { background: #ffe0e0; border-color: #f00; }
 
-/* ===== НИЖНЯЯ НАВИГАЦИЯ ===== */
+/* ===== НАВИГАЦИЯ ===== */
 .bottom-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -228,20 +226,21 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 30px;
-    gap: 16px;
+    padding-top: 40px;
+    gap: 14px;
 }
 .profile-avatar {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     border: 2px solid #000;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 48px;
+    font-size: 54px;
     background: #f8f8f8;
     overflow: hidden;
+    margin-bottom: 6px;
 }
 .profile-avatar img {
     width: 100%;
@@ -254,11 +253,28 @@ body {
     font-style: italic;
     color: #888;
     text-align: center;
-    line-height: 1.6;
-    margin-bottom: 16px;
+    line-height: 1.7;
+    margin-bottom: 10px;
 }
+.btn-tg-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-style: italic;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.btn-tg-login:active { opacity: 0.7; }
 .profile-name {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     font-style: italic;
     text-align: center;
@@ -271,8 +287,8 @@ body {
 }
 .profile-stats {
     display: flex;
-    gap: 20px;
-    margin-top: 10px;
+    gap: 16px;
+    margin-top: 8px;
 }
 .stat-box {
     display: flex;
@@ -280,21 +296,22 @@ body {
     align-items: center;
     border: 2px solid #000;
     border-radius: 14px;
-    padding: 14px 24px;
+    padding: 14px 22px;
     gap: 4px;
 }
 .stat-num {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: bold;
 }
 .stat-label {
-    font-size: 12px;
+    font-size: 11px;
     font-style: italic;
     color: #888;
+    text-align: center;
 }
 .btn-logout {
-    margin-top: 10px;
-    padding: 10px 30px;
+    margin-top: 6px;
+    padding: 10px 32px;
     font-size: 14px;
     font-style: italic;
     background: #f0f0f0;
@@ -308,7 +325,6 @@ body {
 .help-box {
     display: flex;
     flex-direction: column;
-    gap: 0;
 }
 .help-title {
     font-size: 18px;
@@ -347,7 +363,7 @@ body {
 }
 .help-link:active { opacity: 0.5; }
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
+/* ===== МОДАЛКА ===== */
 .modal-overlay {
     display: none;
     position: fixed;
