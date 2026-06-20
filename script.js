@@ -27,14 +27,30 @@ const dateState = {
     year: new Date().getFullYear()
 };
 
+// ===== ИКОНКИ =====
 const ICONS = [
-    '🏃','💪','📚','✏️','🎯','💧','🧘','🎵','🍎','😴',
-    '🚴','🏊','🧠','❤️','⭐','🔥','🌟','💡','🎨','🏋️',
-    '🎮','🌿','🥗','🧹','💊','🛏️','🚿','📝','🎤','🌅',
-    '🏆','🦷','🧴','☕','🍵','🥤','🏠','💰','🧮','⏰',
-    'A','B','C','D','E','F','G','H','I','J','K','L','M',
-    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
+    '🏃','💪','📚','💧','🧘','🥗','😴','✍️',
+    '🎯','🎨','🎸','🏊','🚴','🧹','💊','🐶',
+    '🌅','🧠','🫁','🦷','🚶','🍎','☕','🧘',
+    '📝','🎤','🏋️','🤸','🌿','💤','🥤','🧴',
+    '📖','🖊️','🎹','🏄','🧗','🌙','⭐','🔥'
 ];
+
+// ===== ДАННЫЕ =====
+let habits = JSON.parse(localStorage.getItem('habits') || '[]');
+let progress = JSON.parse(localStorage.getItem('progress') || '{}');
+let currentUser = JSON.parse(localStorage.getItem('tgUser') || 'null');
+
+// ===== ДАТА ГЛАВНОГО ЭКРАНА =====
+let mainDate = new Date();
+mainDate.setHours(0,0,0,0);
+
+function dateKey(d) {
+    return d.toISOString().slice(0,10);
+}
+
+function formatMainDate(d) {
+    const days = ['
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function () {
