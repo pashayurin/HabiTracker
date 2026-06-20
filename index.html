@@ -16,7 +16,7 @@
 <main class="content page active" id="page-home">
     <div class="date-nav-bar">
         <button class="date-nav-arrow" onclick="changeMainDate(-1)">&#8249;</button>
-        <span class="date-nav-label" id="mainDateLabel"></span>
+        <span class="date-nav-label" id="mainDateLabel">загрузка...</span>
         <button class="date-nav-arrow" onclick="changeMainDate(1)">&#8250;</button>
     </div>
     <button class="add-habit-btn" onclick="openModal()">+ Добавить новую привычку</button>
@@ -29,7 +29,6 @@
 
         <div class="profile-avatar" id="profileAvatar">👤</div>
 
-        <!-- Гость -->
         <div id="profileGuest">
             <p class="profile-hint">Войдите через Telegram,<br>чтобы сохранять привычки</p>
             <button class="btn-tg-login" onclick="fakeTelegramLogin()">
@@ -37,7 +36,6 @@
             </button>
         </div>
 
-        <!-- Вошёл -->
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername">—</p>
@@ -123,7 +121,7 @@
 
         <div class="modal-top-row">
             <div class="icon-circle" id="iconCircle" onclick="toggleIconPicker(event)">
-                <span id="selectedIcon">A</span>
+                <span id="selectedIcon">⭐</span>
             </div>
             <input type="text" class="habit-name-input" placeholder="название привычки" id="habitName">
         </div>
@@ -136,7 +134,7 @@
 
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
-                <input type="number" class="setting-input-num" id="habitCount" placeholder="10" min="1">
+                <input type="number" class="setting-input-num" id="habitCount" placeholder="1" min="1">
             </div>
             <div class="divider"></div>
 
