@@ -12,9 +12,9 @@
     <h1 class="app-title">HabiTracker</h1>
 </header>
 
-<main class="content">
+<!-- ===== СТРАНИЦА ГЛАВНАЯ ===== -->
+<main class="content page active" id="page-home">
 
-    <!-- СТРОКА С ДАТОЙ -->
     <div class="date-nav-bar">
         <button class="date-nav-arrow" onclick="changeMainDate(-1)">&#8249;</button>
         <span class="date-nav-label" id="mainDateLabel"></span>
@@ -26,6 +26,98 @@
 
 </main>
 
+<!-- ===== СТРАНИЦА ПРОФИЛЬ ===== -->
+<main class="content page" id="page-profile">
+
+    <div class="profile-box">
+
+        <!-- Аватар -->
+        <div class="profile-avatar" id="profileAvatar">👤</div>
+
+        <!-- Если не вошёл -->
+        <div id="profileGuest">
+            <p class="profile-hint">Войдите через Telegram,<br>чтобы сохранять привычки</p>
+
+            <!-- Telegram Login Widget -->
+            <div id="telegramLoginWrap">
+                <script
+                    async
+                    src="https://telegram.org/js/telegram-widget.js?22"
+                    data-telegram-login="habitrackkbot"
+                    data-size="large"
+                    data-radius="10"
+                    data-onauth="onTelegramAuth(user)"
+                    data-request-access="write">
+                </script>
+            </div>
+        </div>
+
+        <!-- Если вошёл -->
+        <div id="profileUser" style="display:none;">
+            <p class="profile-name" id="profileName">—</p>
+            <p class="profile-username" id="profileUsername">—</p>
+            <div class="profile-stats">
+                <div class="stat-box">
+                    <span class="stat-num" id="statTotal">0</span>
+                    <span class="stat-label">привычек</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num" id="statStreak">0</span>
+                    <span class="stat-label">дней подряд</span>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logout()">Выйти</button>
+        </div>
+
+    </div>
+
+</main>
+
+<!-- ===== СТРАНИЦА ПОМОЩЬ ===== -->
+<main class="content page" id="page-help">
+
+    <div class="help-box">
+        <h2 class="help-title">Помощь</h2>
+        <div class="help-item">
+            <span class="help-icon">➕</span>
+            <div>
+                <p class="help-q">Как добавить привычку?</p>
+                <p class="help-a">Нажмите «+ Добавить новую привычку» на главном экране</p>
+            </div>
+        </div>
+        <div class="help-item">
+            <span class="help-icon">✅</span>
+            <div>
+                <p class="help-q">Как отметить выполнение?</p>
+                <p class="help-a">Нажмите кнопку «+» на карточке привычки</p>
+            </div>
+        </div>
+        <div class="help-item">
+            <span class="help-icon">🗑</span>
+            <div>
+                <p class="help-q">Как удалить привычку?</p>
+                <p class="help-a">Нажмите кнопку «×» на карточке привычки</p>
+            </div>
+        </div>
+        <div class="help-item">
+            <span class="help-icon">📅</span>
+            <div>
+                <p class="help-q">Как посмотреть другой день?</p>
+                <p class="help-a">Используйте стрелки «‹ ›» рядом с датой</p>
+            </div>
+        </div>
+        <div class="help-item">
+            <span class="help-icon">💬</span>
+            <div>
+                <p class="help-q">Поддержка</p>
+                <p class="help-a">Напишите нам: <a href="https://t.me/habitrackkbot" class="help-link">@habitrackkbot</a></p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
 <nav class="bottom-bar">
     <div class="nav-item active" onclick="showPage('home', this)">
         <span class="nav-icon">🏠</span>
@@ -41,7 +133,7 @@
     </div>
 </nav>
 
-<!-- МОДАЛЬНОЕ ОКНО -->
+<!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal">
 
