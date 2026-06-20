@@ -4,13 +4,11 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 
 // ===== СБРОС СТАРОГО МУСОРА =====
-// Удаляем старого сохранённого пользователя-заглушку
 (function cleanOldUser() {
     try {
         const saved = localStorage.getItem('tgUser');
         if (saved) {
             const u = JSON.parse(saved);
-            // Если это заглушка (id=0 или first_name='Гость' или 'Пользователь')
             if (!u || u.id === 0 || u.first_name === 'Гость' || u.first_name === 'Пользователь') {
                 localStorage.removeItem('tgUser');
             }
@@ -80,7 +78,6 @@ function tryGetTelegramUser() {
             window.Telegram.WebApp.initDataUnsafe.user
         ) {
             const u = window.Telegram.WebApp.initDataUnsafe.user;
-            // Проверяем что это реальный пользователь
             if (u && u.id && u.id !== 0) {
                 return u;
             }
@@ -91,14 +88,12 @@ function tryGetTelegramUser() {
 
 // ===== АВТОВХОД =====
 function tryAutoLogin() {
-    // Сначала пробуем реальный Telegram
     const tgUser = tryGetTelegramUser();
     if (tgUser) {
         currentUser = tgUser;
         lsSet('tgUser', currentUser);
         return;
     }
-    // Иначе проверяем сохранённого реального пользователя
     const saved = lsGet('tgUser', 'null');
     if (saved && saved.id && saved.id !== 0) {
         currentUser = saved;
@@ -111,11 +106,9 @@ function tryAutoLogin() {
 function fakeTelegramLogin() {
     const tgUser = tryGetTelegramUser();
     if (tgUser) {
-        // Реальный пользователь из Telegram
         currentUser = tgUser;
         lsSet('tgUser', currentUser);
     } else {
-        // Открыто в браузере — показываем сообщение
         alert('Откройте приложение через бота @habitrackkbot в Telegram');
         return;
     }
@@ -423,8 +416,26 @@ function renderProfile() {
     }
 }
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
+// ===== ИНИЦИАЛИЗАЦИЯ С ДЕБАГОМ =====
 window.onload = function() {
+    // ===== ВРЕМЕННЫЙ ДЕБАГ =====
+    const debugInfo = {
+        hasTelegram:    !!(window.Telegram),
+        hasWebApp:      !!(window.Telegram && window.Telegram.WebApp),
+        initData:       window.Telegram?.WebApp?.initData || 'ПУСТО',
+        initDataUnsafe: JSON.stringify(window.Telegram?.WebApp?.initDataUnsafe || {}),
+        user:           JSON.stringify(window.Telegram?.WebApp?.initDataUnsafe?.user || null)
+    };
+
+    alert(
+        'Telegram: '     + debugInfo.hasTelegram + '\n' +
+        'WebApp: '       + debugInfo.hasWebApp   + '\n' +
+        'initData: '     + (debugInfo.initData !== 'ПУСТО' ? 'ЕСТЬ' : 'ПУСТО') + '\n' +
+        'unsafe: '       + debugInfo.initDataUnsafe + '\n' +
+        'user: '         + debugInfo.user
+    );
+    // ===== КОНЕЦ ДЕБАГА =====
+
     tryAutoLogin();
     renderDateLabel();
     renderHabits();
