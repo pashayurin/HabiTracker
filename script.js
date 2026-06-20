@@ -1,5 +1,7 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+// ===== TELEGRAM (безопасно) =====
+if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.expand();
+}
 
 // ===== ДАТА =====
 const months = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
@@ -99,7 +101,6 @@ function closeModalOutside(event) {
     if (event.target === document.getElementById('modalOverlay')) {
         closeModal();
     }
-    // Закрыть пикер при клике вне него
     if (!event.target.closest('#iconPicker') && !event.target.closest('#iconCircle')) {
         closeIconPicker();
     }
