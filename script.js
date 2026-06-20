@@ -34,9 +34,25 @@ const ICONS = [
 ];
 
 // ===== СОСТОЯНИЕ =====
-let habits      = lsGet('habits', '[]');
-let progress    = lsGet('progress', '{}');
-let currentUser = lsGet('tgUser', 'null');
+let habits   = lsGet('habits', '[]');
+let progress = lsGet('progress', '{}');
+
+// Пытаемся получить пользователя из Telegram WebApp
+let currentUser = null;
+
+function tryGetTelegramUser() {
+    try {
+        if (
+            window.Telegram &&
+            window.Telegram.WebApp &&
+            window.Telegram.WebApp.initDataUnsafe &&
+            window.Telegram.WebApp.initDataUnsafe.user
+        ) {
+            return window.Telegram.WebApp.initDataUnsafe.user;
+        }
+    } catch(e) {}
+    return null;
+}
 
 let selectedIconValue = '⭐';
 let reminderOn        = false;
@@ -106,9 +122,9 @@ function renderHabits() {
     const list = document.getElementById('habitsList');
     if (!list) return;
 
-    const key          = dateKey(currentDate);
+    const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-    const currentDay   = DAY_KEYS[currentDate.getDay()];
+    const currentDay    = DAY_KEYS[currentDate.getDay()];
 
     const filtered = habits.filter(h => {
         if (!h.days || h.days.length === 0) return true;
@@ -166,7 +182,7 @@ function deleteHabit(id) {
 
 // ===== МОДАЛКА =====
 function openModal() {
-    const now      = new Date();
+    const now       = new Date();
     dateState.day   = now.getDate();
     dateState.month = now.getMonth();
     dateState.year  = now.getFullYear();
@@ -226,7 +242,7 @@ function selectIcon(ic) {
 // ===== ДАТА В МОДАЛКЕ =====
 function changeDate(type, dir) {
     if (type === 'day') {
-        const max    = DAYS_IN_MONTH[dateState.month];
+        const max     = DAYS_IN_MONTH[dateState.month];
         dateState.day = ((dateState.day - 1 + dir + max) % max) + 1;
     } else if (type === 'month') {
         dateState.month = (dateState.month + 12 + dir) % 12;
@@ -250,7 +266,7 @@ function toggleDay(btn) {
 }
 
 function toggleAllDays(btn) {
-    const dayBtns  = document.querySelectorAll('.day-btn:not(.day-btn-all)');
+    const dayBtns   = document.querySelectorAll('.day-btn:not(.day-btn-all)');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
     dayBtns.forEach(b => {
         if (allActive) b.classList.remove('active');
@@ -322,7 +338,15 @@ function renderProfile() {
         if (currentUser.photo_url) {
             avatarEl.innerHTML = `<img src="${currentUser.photo_url}" alt="avatar">`;
         } else {
-            avatarEl.textContent = '👤';
+            // Берём первую букву имени как аватар
+            const letter = (currentUser.first_name || 'П')[0].toUpperCase();
+            avatarEl.innerHTML = `
+                <div style="
+                    width:100%;height:100%;
+                    background:#000;color:#fff;
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:42px;font-weight:bold;border-radius:50%;
+                ">${letter}</div>`;
         }
 
         const todayKey  = dateKey(new Date());
@@ -342,14 +366,33 @@ function renderProfile() {
     }
 }
 
+// Вход: сначала пробуем Telegram, иначе показываем кнопку
+function tryAutoLogin() {
+    const tgUser = tryGetTelegramUser();
+    if (tgUser) {
+        currentUser = tgUser;
+        lsSet('tgUser', currentUser);
+    } else {
+        // Проверяем сохранённого пользователя
+        currentUser = lsGet('tgUser', 'null');
+    }
+}
+
+// Кнопка "Войти" — показывает заглушку если нет реального Telegram
 function fakeTelegramLogin() {
-    currentUser = {
-        id:         123456789,
-        first_name: 'Пользователь',
-        last_name:  '',
-        username:   'username',
-        photo_url:  null
-    };
+    const tgUser = tryGetTelegramUser();
+    if (tgUser) {
+        currentUser = tgUser;
+    } else {
+        // Заглушка только если не в Telegram
+        currentUser = {
+            id:         0,
+            first_name: 'Гость',
+            last_name:  '',
+            username:   null,
+            photo_url:  null
+        };
+    }
     lsSet('tgUser', currentUser);
     renderProfile();
 }
@@ -368,7 +411,8 @@ function logout() {
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function() {
+    tryAutoLogin();
     renderDateLabel();
     renderHabits();
-    if (currentUser) renderProfile();
+    renderProfile();
 };
