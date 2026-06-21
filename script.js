@@ -418,23 +418,6 @@ function renderProfile() {
 
 // ===== ИНИЦИАЛИЗАЦИЯ С ДЕБАГОМ =====
 window.onload = function() {
-    // ===== ВРЕМЕННЫЙ ДЕБАГ =====
-    const debugInfo = {
-        hasTelegram:    !!(window.Telegram),
-        hasWebApp:      !!(window.Telegram && window.Telegram.WebApp),
-        initData:       window.Telegram?.WebApp?.initData || 'ПУСТО',
-        initDataUnsafe: JSON.stringify(window.Telegram?.WebApp?.initDataUnsafe || {}),
-        user:           JSON.stringify(window.Telegram?.WebApp?.initDataUnsafe?.user || null)
-    };
-
-    alert(
-        'Telegram: '     + debugInfo.hasTelegram + '\n' +
-        'WebApp: '       + debugInfo.hasWebApp   + '\n' +
-        'initData: '     + (debugInfo.initData !== 'ПУСТО' ? 'ЕСТЬ' : 'ПУСТО') + '\n' +
-        'unsafe: '       + debugInfo.initDataUnsafe + '\n' +
-        'user: '         + debugInfo.user
-    );
-    // ===== КОНЕЦ ДЕБАГА =====
 
     tryAutoLogin();
     renderDateLabel();
