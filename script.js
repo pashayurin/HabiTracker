@@ -177,8 +177,14 @@ function renderHabits() {
         return h.days.includes(currentDay);
     });
 
+    // ===== ОБНОВЛЁННОЕ ПУСТОЕ СОСТОЯНИЕ =====
     if (filtered.length === 0) {
-        list.innerHTML = '<p style="color:#aaa;font-style:italic;font-size:14px;padding:20px 0;">Нет привычек на этот день</p>';
+        list.innerHTML = `
+            <div class="empty-msg">
+                <span class="empty-icon">🌱</span>
+                <span>Нет привычек на этот день</span>
+                <span style="font-size:12px;margin-top:4px;">Нажмите «+ Добавить», чтобы начать</span>
+            </div>`;
         return;
     }
 
@@ -195,7 +201,7 @@ function renderHabits() {
                     <div class="habit-name">${h.name}</div>
                     <div class="habit-sub">${done} / ${total} ${h.unit || 'раз'}</div>
                     <div class="progress-bar-wrap">
-                        <div class="progress-bar-fill" style="width:${pct}%;background:${completed ? '#4CAF50' : '#000'}"></div>
+                        <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
                     </div>
                 </div>
                 <div class="card-btns">
@@ -334,8 +340,8 @@ function saveHabit() {
 
     if (!name) {
         nameInput.focus();
-        nameInput.style.borderColor = '#f00';
-        setTimeout(() => nameInput.style.borderColor = '#ccc', 1500);
+        nameInput.style.borderColor = '#FF6584';
+        setTimeout(() => nameInput.style.borderColor = 'var(--border)', 1500);
         return;
     }
 
@@ -392,9 +398,10 @@ function renderProfile() {
             avatarEl.innerHTML = `
                 <div style="
                     width:100%;height:100%;
-                    background:#000;color:#fff;
+                    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+                    color:#fff;
                     display:flex;align-items:center;justify-content:center;
-                    font-size:42px;font-weight:bold;border-radius:50%;
+                    font-size:40px;font-weight:700;border-radius:50%;
                 ">${letter}</div>`;
         }
 
@@ -416,9 +423,8 @@ function renderProfile() {
     }
 }
 
-// ===== ИНИЦИАЛИЗАЦИЯ С ДЕБАГОМ =====
+// ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = function() {
-
     tryAutoLogin();
     renderDateLabel();
     renderHabits();
