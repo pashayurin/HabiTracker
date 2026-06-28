@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -116,22 +116,28 @@
 <!-- ===== МОДАЛКА ===== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal">
+
         <h2 class="modal-title">Добавить привычку</h2>
+
         <div class="modal-top-row">
             <div class="icon-circle" id="iconCircle" onclick="toggleIconPicker(event)">
                 <span id="selectedIcon">⭐</span>
             </div>
             <input type="text" class="habit-name-input" placeholder="название привычки" id="habitName">
         </div>
+
         <div class="icon-picker" id="iconPicker">
             <div class="icon-picker-grid" id="iconGrid"></div>
         </div>
+
         <div class="settings-box">
+
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
                 <input type="number" class="setting-input-num" id="habitCount" placeholder="1" min="1">
             </div>
             <div class="divider"></div>
+
             <div class="setting-row">
                 <span class="setting-label">единица измерения</span>
                 <select class="setting-select" id="habitUnit">
@@ -144,27 +150,30 @@
                 </select>
             </div>
             <div class="divider"></div>
+
+            <!-- ===== ДАТА — ИСПРАВЛЕНА ===== -->
             <div class="setting-row date-row">
-    <span class="setting-label">дата начала</span>
-    <div class="date-inputs">
-        <div class="custom-select-wrap">
-            <button class="date-arrow" onclick="changeDate('day',-1)">‹</button>
-            <span class="date-value" id="startDay">1</span>
-            <button class="date-arrow" onclick="changeDate('day',1)">›</button>
-        </div>
-        <div class="custom-select-wrap">
-            <button class="date-arrow" onclick="changeDate('month',-1)">‹</button>
-            <span class="date-value" id="startMonth">ЯНВ</span>
-            <button class="date-arrow" onclick="changeDate('month',1)">›</button>
-        </div>
-        <div class="custom-select-wrap">
-            <button class="date-arrow" onclick="changeDate('year',-1)">‹</button>
-            <span class="date-value" id="startYear">2025</span>
-            <button class="date-arrow" onclick="changeDate('year',1)">›</button>
-        </div>
-    </div>
-</div>
+                <span class="setting-label">дата начала</span>
+                <div class="date-inputs">
+                    <div class="custom-select-wrap">
+                        <button class="date-arrow" onclick="changeDate('day',-1)">‹</button>
+                        <span class="date-value" id="startDay">1</span>
+                        <button class="date-arrow" onclick="changeDate('day',1)">›</button>
+                    </div>
+                    <div class="custom-select-wrap">
+                        <button class="date-arrow" onclick="changeDate('month',-1)">‹</button>
+                        <span class="date-value" id="startMonth">ЯНВ</span>
+                        <button class="date-arrow" onclick="changeDate('month',1)">›</button>
+                    </div>
+                    <div class="custom-select-wrap">
+                        <button class="date-arrow" onclick="changeDate('year',-1)">‹</button>
+                        <span class="date-value" id="startYear">2025</span>
+                        <button class="date-arrow" onclick="changeDate('year',1)">›</button>
+                    </div>
+                </div>
+            </div>
             <div class="divider"></div>
+
             <div class="setting-row setting-row-wrap">
                 <span class="setting-label">по каким дням недели</span>
                 <div class="days-row">
@@ -179,6 +188,7 @@
                 </div>
             </div>
             <div class="divider"></div>
+
             <div class="setting-row">
                 <span class="setting-label">напоминания</span>
                 <div class="toggle-wrap">
@@ -188,14 +198,17 @@
                     </div>
                 </div>
             </div>
+
         </div>
+
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeModal()">Отмена</button>
             <button class="btn-save" onclick="saveHabit()">Сохранить</button>
         </div>
+
     </div>
 </div>
 
-<script src="script.js?v=3"></script>
+<script src="script.js?v=4"></script>
 </body>
 </html>
