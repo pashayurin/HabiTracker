@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -30,16 +30,13 @@
 <!-- ===== ПРОФИЛЬ ===== -->
 <main class="content page" id="page-profile">
     <div class="profile-box">
-
         <div class="profile-avatar" id="profileAvatar">👤</div>
-
         <div id="profileGuest">
             <p class="profile-hint">Войдите через Telegram,<br>чтобы сохранять привычки</p>
             <button class="btn-tg-login" onclick="fakeTelegramLogin()">
                 <span>✈️</span> Войти через Telegram
             </button>
         </div>
-
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername"></p>
@@ -55,7 +52,6 @@
             </div>
             <button class="btn-logout" onclick="logout()">Выйти</button>
         </div>
-
     </div>
 </main>
 
@@ -120,28 +116,22 @@
 <!-- ===== МОДАЛКА ===== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal">
-
         <h2 class="modal-title">Добавить привычку</h2>
-
         <div class="modal-top-row">
             <div class="icon-circle" id="iconCircle" onclick="toggleIconPicker(event)">
                 <span id="selectedIcon">⭐</span>
             </div>
             <input type="text" class="habit-name-input" placeholder="название привычки" id="habitName">
         </div>
-
         <div class="icon-picker" id="iconPicker">
             <div class="icon-picker-grid" id="iconGrid"></div>
         </div>
-
         <div class="settings-box">
-
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
                 <input type="number" class="setting-input-num" id="habitCount" placeholder="1" min="1">
             </div>
             <div class="divider"></div>
-
             <div class="setting-row">
                 <span class="setting-label">единица измерения</span>
                 <select class="setting-select" id="habitUnit">
@@ -154,8 +144,7 @@
                 </select>
             </div>
             <div class="divider"></div>
-
-            <div class="setting-row">
+            <div class="setting-row setting-row-wrap">
                 <span class="setting-label">дата начала</span>
                 <div class="date-inputs">
                     <div class="custom-select-wrap">
@@ -176,7 +165,6 @@
                 </div>
             </div>
             <div class="divider"></div>
-
             <div class="setting-row setting-row-wrap">
                 <span class="setting-label">по каким дням недели</span>
                 <div class="days-row">
@@ -191,7 +179,6 @@
                 </div>
             </div>
             <div class="divider"></div>
-
             <div class="setting-row">
                 <span class="setting-label">напоминания</span>
                 <div class="toggle-wrap">
@@ -201,17 +188,14 @@
                     </div>
                 </div>
             </div>
-
         </div>
-
         <div class="modal-buttons">
             <button class="btn-cancel" onclick="closeModal()">Отмена</button>
             <button class="btn-save" onclick="saveHabit()">Сохранить</button>
         </div>
-
     </div>
 </div>
 
-<script src="script.js?v=2"></script>
+<script src="script.js?v=3"></script>
 </body>
 </html>
