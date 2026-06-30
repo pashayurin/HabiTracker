@@ -1,6 +1,95 @@
+// ===== СЕРВЕР =====
+const SERVER_URL = 'https://habitracker-server.onrender.com';
+
 // ===== TELEGRAM INIT =====
 if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand();
+}
+
+// ===== СИНХРОНИЗАЦИЯ С СЕРВЕРОМ =====
+async function syncWithServer() {
+    if (!currentUser || !currentUser.id) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/sync`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                firstName:  currentUser.first_name || '',
+                username:   currentUser.username   || '',
+                habits:     habits   || [],
+                progress:   progress || {}
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Данные синхронизированы с сервером');
+
+            // Если на сервере данных больше — берём с сервера
+            if (data.habits && data.habits.length >= habits.length) {
+                habits = data.habits;
+                lsSet('habits', habits);
+            }
+            if (data.progress && Object.keys(data.progress).length >= Object.keys(progress).length) {
+                progress = data.progress;
+                lsSet('progress', progress);
+            }
+
+            renderHabits();
+            renderProfile();
+        }
+    } catch(e) {
+        console.log('⚠️ Сервер недоступен, работаем офлайн');
+    }
+}
+
+// ===== ЗАГРУЗИТЬ ДАННЫЕ С СЕРВЕРА =====
+async function loadFromServer() {
+    if (!currentUser || !currentUser.id) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/user/${currentUser.id}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.habits && data.habits.length > 0) {
+                habits = data.habits;
+                lsSet('habits', habits);
+            }
+            if (data.progress && Object.keys(data.progress).length > 0) {
+                progress = data.progress;
+                lsSet('progress', progress);
+            }
+            renderHabits();
+            renderProfile();
+            console.log('✅ Данные загружены с сервера');
+        }
+    } catch(e) {
+        console.log('⚠️ Не удалось загрузить с сервера, используем локальные данные');
+    }
+}
+
+// ===== ПОДПИСКА НА УВЕДОМЛЕНИЯ =====
+async function subscribeToNotifications() {
+    if (!currentUser || !currentUser.id) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/subscribe`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                habits:     habits || []
+            })
+        });
+
+        if (response.ok) {
+            console.log('✅ Подписка на уведомления оформлена');
+        }
+    } catch(e) {
+        console.log('⚠️ Не удалось подписаться на уведомления');
+    }
 }
 
 // ===== СБРОС СТАРОГО МУСОРА =====
@@ -57,6 +146,7 @@ let currentUser = null;
 
 let selectedIconValue = '⭐';
 let reminderOn        = false;
+let reminderTime      = '09:00'; // время уведомления по умолчанию
 let iconPickerOpen    = false;
 
 let currentDate = new Date();
@@ -113,6 +203,9 @@ function fakeTelegramLogin() {
         return;
     }
     renderProfile();
+    // После входа синхронизируем и загружаем данные
+    loadFromServer();
+    syncWithServer();
 }
 
 function logout() {
@@ -177,7 +270,6 @@ function renderHabits() {
         return h.days.includes(currentDay);
     });
 
-    // ===== ОБНОВЛЁННОЕ ПУСТОЕ СОСТОЯНИЕ =====
     if (filtered.length === 0) {
         list.innerHTML = `
             <div class="empty-msg">
@@ -223,6 +315,8 @@ function addProgress(id) {
         progress[key][id] = current + 1;
         lsSet('progress', progress);
         renderHabits();
+        // Синхронизируем после каждого прогресса
+        syncWithServer();
     }
 }
 
@@ -230,6 +324,8 @@ function deleteHabit(id) {
     habits = habits.filter(h => h.id !== id);
     lsSet('habits', habits);
     renderHabits();
+    // Синхронизируем после удаления
+    syncWithServer();
 }
 
 // ===== МОДАЛКА =====
@@ -247,9 +343,14 @@ function openModal() {
     selectedIconValue = '⭐';
     document.getElementById('selectedIcon').textContent = '⭐';
 
-    reminderOn = false;
+    reminderOn   = false;
+    reminderTime = '09:00';
     document.getElementById('reminderToggle').classList.remove('on');
     document.getElementById('toggleLabel').textContent = 'нет';
+
+    // Скрываем поле времени если есть
+    const timeWrap = document.getElementById('reminderTimeWrap');
+    if (timeWrap) timeWrap.style.display = 'none';
 
     document.querySelectorAll('.day-btn:not(.day-btn-all)').forEach(b => b.classList.remove('active'));
 
@@ -331,6 +432,16 @@ function toggleReminder() {
     reminderOn = !reminderOn;
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
     document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
+
+    // Показываем/скрываем поле выбора времени
+    const timeWrap = document.getElementById('reminderTimeWrap');
+    if (timeWrap) {
+        timeWrap.style.display = reminderOn ? 'flex' : 'none';
+    }
+}
+
+function setReminderTime(val) {
+    reminderTime = val;
 }
 
 // ===== СОХРАНИТЬ ПРИВЫЧКУ =====
@@ -356,20 +467,27 @@ function saveHabit() {
     const startDay   = String(dateState.day).padStart(2, '0');
 
     const habit = {
-        id:        Date.now().toString(),
+        id:           Date.now().toString(),
         name,
         icon,
         count,
         unit,
-        reminder:  reminderOn,
-        days:      activeDays,
-        startDate: `${dateState.year}-${startMonth}-${startDay}`
+        reminder:     reminderOn,
+        reminderTime: reminderOn ? reminderTime : null,
+        days:         activeDays,
+        startDate:    `${dateState.year}-${startMonth}-${startDay}`
     };
 
     habits.push(habit);
     lsSet('habits', habits);
     closeModal();
     renderHabits();
+
+    // Синхронизируем и подписываем на уведомления
+    syncWithServer();
+    if (reminderOn) {
+        subscribeToNotifications();
+    }
 }
 
 // ===== ПРОФИЛЬ =====
@@ -415,6 +533,9 @@ function renderProfile() {
         document.getElementById('statTotal').textContent = habits.length;
         document.getElementById('statDone').textContent  = doneToday;
 
+        // Показываем кнопку уведомлений если пользователь авторизован
+        renderNotificationSettings();
+
     } else {
         guestEl.style.display = 'flex';
         userEl.style.display  = 'none';
@@ -423,10 +544,48 @@ function renderProfile() {
     }
 }
 
+// ===== НАСТРОЙКИ УВЕДОМЛЕНИЙ В ПРОФИЛЕ =====
+function renderNotificationSettings() {
+    const container = document.getElementById('notificationSettings');
+    if (!container) return;
+
+    const habitsWithReminder = habits.filter(h => h.reminder && h.reminderTime);
+
+    if (habitsWithReminder.length === 0) {
+        container.innerHTML = `
+            <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:8px 0;">
+                Нет активных напоминаний.<br>
+                Добавьте привычку с напоминанием.
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = habitsWithReminder.map(h => `
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:8px 0;border-bottom:1px solid var(--border);">
+            <span>${h.icon} ${h.name}</span>
+            <span style="color:var(--primary);font-weight:600;">⏰ ${h.reminderTime}</span>
+        </div>
+    `).join('');
+}
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-window.onload = function() {
+window.onload = async function() {
     tryAutoLogin();
     renderDateLabel();
     renderHabits();
     renderProfile();
+
+    // Если пользователь авторизован — загружаем данные с сервера
+    if (currentUser && currentUser.id) {
+        await loadFromServer();
+        await syncWithServer();
+    }
+
+    // Автосинхронизация каждые 5 минут
+    setInterval(() => {
+        if (currentUser && currentUser.id) {
+            syncWithServer();
+        }
+    }, 5 * 60 * 1000);
 };
