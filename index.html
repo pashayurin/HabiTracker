@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -44,6 +44,16 @@
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername"></p>
+
+            <!-- Часовой пояс -->
+            <div class="timezone-info" id="timezoneInfo" style="
+                font-size: 12px;
+                color: var(--text-secondary);
+                text-align: center;
+                margin: 4px 0 12px;
+            ">
+                🌍 <span id="timezoneLabel">определяется...</span>
+            </div>
 
             <div class="profile-stats">
                 <div class="stat-box">
@@ -108,6 +118,13 @@
             <div>
                 <p class="help-q">Как включить напоминания?</p>
                 <p class="help-a">При добавлении привычки включите тумблер «напоминания» и выберите время</p>
+            </div>
+        </div>
+        <div class="help-item">
+            <span class="help-icon">🌍</span>
+            <div>
+                <p class="help-q">Часовой пояс</p>
+                <p class="help-a">Определяется автоматически по вашему устройству — никаких настроек не нужно!</p>
             </div>
         </div>
         <div class="help-item">
@@ -204,51 +221,4 @@
                     <button class="day-btn" onclick="toggleDay(this)">ПН</button>
                     <button class="day-btn" onclick="toggleDay(this)">ВТ</button>
                     <button class="day-btn" onclick="toggleDay(this)">СР</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ЧТ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ПТ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">СБ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ВС</button>
-                    <button class="day-btn day-btn-all" onclick="toggleAllDays(this)">ВСЕ</button>
-                </div>
-            </div>
-            <div class="divider"></div>
-
-            <!-- ===== НАПОМИНАНИЯ ===== -->
-            <div class="setting-row">
-                <span class="setting-label">напоминания</span>
-                <div class="toggle-wrap">
-                    <span class="toggle-label" id="toggleLabel">нет</span>
-                    <div class="toggle" id="reminderToggle" onclick="toggleReminder()">
-                        <div class="toggle-thumb"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== ВРЕМЯ НАПОМИНАНИЯ (скрыто по умолчанию) ===== -->
-            <div id="reminderTimeWrap" style="display:none;">
-                <div class="divider"></div>
-                <div class="setting-row">
-                    <span class="setting-label">время напоминания</span>
-                    <input
-                        type="time"
-                        id="reminderTimeInput"
-                        value="09:00"
-                        onchange="setReminderTime(this.value)"
-                        class="setting-time-input"
-                    >
-                </div>
-            </div>
-
-        </div>
-
-        <div class="modal-buttons">
-            <button class="btn-cancel" onclick="closeModal()">Отмена</button>
-            <button class="btn-save" onclick="saveHabit()">Сохранить</button>
-        </div>
-
-    </div>
-</div>
-
-<script src="script.js?v=5"></script>
-</body>
-</html>
+                
