@@ -795,4 +795,38 @@ body {
     box-shadow: 0 4px 15px rgba(108,99,255,0.4);
     transition: opacity 0.2s, transform 0.15s;
 }
+
 .btn-save:active { opacity: 0.85; transform: scale(0.97); }
+
+/* ===== БЛОК УВЕДОМЛЕНИЙ ===== */
+.notifications-block {
+    width: 100%;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+}
+.notifications-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+}
+
+/* ===== ВРЕМЯ НАПОМИНАНИЯ ===== */
+.setting-time-input {
+    padding: 8px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Inter', Arial, sans-serif;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+}
+.setting-time-input:focus {
+    border-color: var(--primary);
+}
