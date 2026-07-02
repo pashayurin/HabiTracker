@@ -1,9 +1,20 @@
 // ===== СЕРВЕР =====
 const SERVER_URL = 'https://habitracker-server.onrender.com';
 
-// ===== TELEGRAM INIT =====
-if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.expand();
+// ===== БЕЗОПАСНЫЙ localStorage =====
+function lsGet(key, fallback) {
+    try {
+        const val = localStorage.getItem(key);
+        if (val === null || val === undefined) return JSON.parse(fallback);
+        return JSON.parse(val);
+    } catch(e) {
+        return JSON.parse(fallback);
+    }
+}
+function lsSet(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch(e) {}
 }
 
 // ===== СБРОС СТАРОГО МУСОРА =====
@@ -20,22 +31,6 @@ if (window.Telegram && window.Telegram.WebApp) {
         localStorage.removeItem('tgUser');
     }
 })();
-
-// ===== БЕЗОПАСНЫЙ localStorage =====
-function lsGet(key, fallback) {
-    try {
-        const val = localStorage.getItem(key);
-        if (val === null || val === undefined) return JSON.parse(fallback);
-        return JSON.parse(val);
-    } catch(e) {
-        return JSON.parse(fallback);
-    }
-}
-function lsSet(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch(e) {}
-}
 
 // ===== КОНСТАНТЫ =====
 const MONTHS      = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
@@ -81,89 +76,15 @@ function getUserTimezone() {
     }
 }
 
-// ===== СИНХРОНИЗАЦИЯ С СЕРВЕРОМ =====
-async function syncWithServer() {
-    if (!currentUser || !currentUser.id) return;
-
+// ===== TELEGRAM INIT =====
+function initTelegram() {
     try {
-        const response = await fetch(`${SERVER_URL}/api/sync`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                firstName:  currentUser.first_name || '',
-                username:   currentUser.username   || '',
-                habits:     habits   || [],
-                progress:   progress || {},
-                timezone:   getUserTimezone()   // ← ПЕРЕДАЁМ ЧАСОВОЙ ПОЯС
-            })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Данные синхронизированы с сервером');
-
-            if (data.habits && data.habits.length >= habits.length) {
-                habits = data.habits;
-                lsSet('habits', habits);
-            }
-            if (data.progress && Object.keys(data.progress).length >= Object.keys(progress).length) {
-                progress = data.progress;
-                lsSet('progress', progress);
-            }
-
-            renderHabits();
-            renderProfile();
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
         }
     } catch(e) {
-        console.log('⚠️ Сервер недоступен, работаем офлайн');
-    }
-}
-
-// ===== ЗАГРУЗИТЬ ДАННЫЕ С СЕРВЕРА =====
-async function loadFromServer() {
-    if (!currentUser || !currentUser.id) return;
-
-    try {
-        const response = await fetch(`${SERVER_URL}/api/user/${currentUser.id}`);
-        if (response.ok) {
-            const data = await response.json();
-            if (data.habits && data.habits.length > 0) {
-                habits = data.habits;
-                lsSet('habits', habits);
-            }
-            if (data.progress && Object.keys(data.progress).length > 0) {
-                progress = data.progress;
-                lsSet('progress', progress);
-            }
-            renderHabits();
-            renderProfile();
-            console.log('✅ Данные загружены с сервера');
-        }
-    } catch(e) {
-        console.log('⚠️ Не удалось загрузить с сервера, используем локальные данные');
-    }
-}
-
-// ===== ПОДПИСКА НА УВЕДОМЛЕНИЯ =====
-async function subscribeToNotifications() {
-    if (!currentUser || !currentUser.id) return;
-
-    try {
-        const response = await fetch(`${SERVER_URL}/api/subscribe`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                habits:     habits || []
-            })
-        });
-
-        if (response.ok) {
-            console.log('✅ Подписка на уведомления оформлена');
-        }
-    } catch(e) {
-        console.log('⚠️ Не удалось подписаться на уведомления');
+        console.log('Telegram WebApp недоступен');
     }
 }
 
@@ -220,6 +141,85 @@ function logout() {
     currentUser = null;
     try { localStorage.removeItem('tgUser'); } catch(e) {}
     renderProfile();
+}
+
+// ===== СИНХРОНИЗАЦИЯ С СЕРВЕРОМ =====
+async function syncWithServer() {
+    if (!currentUser || !currentUser.id) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/sync`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                firstName:  currentUser.first_name || '',
+                username:   currentUser.username   || '',
+                habits:     habits   || [],
+                progress:   progress || {},
+                timezone:   getUserTimezone()
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Синхронизировано');
+
+            if (data.habits && data.habits.length >= habits.length) {
+                habits = data.habits;
+                lsSet('habits', habits);
+            }
+            if (data.progress && Object.keys(data.progress).length >= Object.keys(progress).length) {
+                progress = data.progress;
+                lsSet('progress', progress);
+            }
+
+            renderHabits();
+            renderProfile();
+        }
+    } catch(e) {
+        console.log('⚠️ Сервер недоступен, работаем офлайн');
+    }
+}
+
+// ===== ЗАГРУЗИТЬ ДАННЫЕ С СЕРВЕРА =====
+async function loadFromServer() {
+    if (!currentUser || !currentUser.id) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/user/${currentUser.id}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.habits && data.habits.length > 0) {
+                habits = data.habits;
+                lsSet('habits', habits);
+            }
+            if (data.progress && Object.keys(data.progress).length > 0) {
+                progress = data.progress;
+                lsSet('progress', progress);
+            }
+            renderHabits();
+            renderProfile();
+            console.log('✅ Данные загружены с сервера');
+        }
+    } catch(e) {
+        console.log('⚠️ Не удалось загрузить с сервера');
+    }
+}
+
+// ===== ПОДПИСКА НА УВЕДОМЛЕНИЯ =====
+async function subscribeToNotifications() {
+    if (!currentUser || !currentUser.id) return;
+    try {
+        await fetch(`${SERVER_URL}/api/subscribe`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                habits:     habits || []
+            })
+        });
+    } catch(e) {}
 }
 
 // ===== УТИЛИТЫ ДАТЫ =====
@@ -488,9 +488,7 @@ function saveHabit() {
     renderHabits();
 
     syncWithServer();
-    if (reminderOn) {
-        subscribeToNotifications();
-    }
+    if (reminderOn) subscribeToNotifications();
 }
 
 // ===== ПРОФИЛЬ =====
@@ -576,21 +574,32 @@ function renderNotificationSettings() {
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-window.onload = async function() {
-    tryAutoLogin();
-    renderDateLabel();
-    renderHabits();
-    renderProfile();
+// Используем DOMContentLoaded вместо window.onload — быстрее и надёжнее
+document.addEventListener('DOMContentLoaded', function() {
 
-    if (currentUser && currentUser.id) {
-        await loadFromServer();
-        await syncWithServer();
-    }
+    // Инициализируем Telegram
+    initTelegram();
 
-    // Автосинхронизация каждые 5 минут
-    setInterval(() => {
+    // Небольшая задержка чтобы Telegram WebApp успел загрузиться
+    setTimeout(async function() {
+
+        tryAutoLogin();
+        renderDateLabel();   // ← Рендерим дату сразу
+        renderHabits();      // ← Рендерим привычки сразу
+        renderProfile();     // ← Рендерим профиль сразу
+
+        // Если пользователь авторизован — загружаем данные с сервера
         if (currentUser && currentUser.id) {
-            syncWithServer();
+            await loadFromServer();
+            await syncWithServer();
         }
-    }, 5 * 60 * 1000);
-};
+
+        // Автосинхронизация каждые 5 минут
+        setInterval(() => {
+            if (currentUser && currentUser.id) {
+                syncWithServer();
+            }
+        }, 5 * 60 * 1000);
+
+    }, 300); // 300мс задержка для Telegram WebApp
+});
