@@ -6,6 +6,81 @@ if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand();
 }
 
+// ===== СБРОС СТАРОГО МУСОРА =====
+(function cleanOldUser() {
+    try {
+        const saved = localStorage.getItem('tgUser');
+        if (saved) {
+            const u = JSON.parse(saved);
+            if (!u || u.id === 0 || u.first_name === 'Гость' || u.first_name === 'Пользователь') {
+                localStorage.removeItem('tgUser');
+            }
+        }
+    } catch(e) {
+        localStorage.removeItem('tgUser');
+    }
+})();
+
+// ===== БЕЗОПАСНЫЙ localStorage =====
+function lsGet(key, fallback) {
+    try {
+        const val = localStorage.getItem(key);
+        if (val === null || val === undefined) return JSON.parse(fallback);
+        return JSON.parse(val);
+    } catch(e) {
+        return JSON.parse(fallback);
+    }
+}
+function lsSet(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch(e) {}
+}
+
+// ===== КОНСТАНТЫ =====
+const MONTHS      = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
+const MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DAYS_FULL   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const DAY_KEYS    = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+const DAYS_IN_MONTH = [31,28,29,31,30,31,30,31,31,30,31,30,31];
+
+// ===== ИКОНКИ =====
+const ICONS = [
+    '🏃','💪','📚','💧','🧘','🥗','😴','✍️',
+    '🎯','🎨','🎸','🏊','🚴','🧹','💊','🐶',
+    '🌅','🧠','🫁','🦷','🚶','🍎','☕','🧴',
+    '📝','🎤','🏋️','🤸','🌿','💤','🥤','🧘',
+    '📖','🖊️','🎹','🏄','🧗','🌙','⭐','🔥'
+];
+
+// ===== СОСТОЯНИЕ =====
+let habits   = lsGet('habits', '[]');
+let progress = lsGet('progress', '{}');
+let currentUser = null;
+
+let selectedIconValue = '⭐';
+let reminderOn        = false;
+let reminderTime      = '09:00';
+let iconPickerOpen    = false;
+
+let currentDate = new Date();
+currentDate.setHours(0, 0, 0, 0);
+
+const dateState = {
+    day:   new Date().getDate(),
+    month: new Date().getMonth(),
+    year:  new Date().getFullYear()
+};
+
+// ===== ЧАСОВОЙ ПОЯС =====
+function getUserTimezone() {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow';
+    } catch(e) {
+        return 'Europe/Moscow';
+    }
+}
+
 // ===== СИНХРОНИЗАЦИЯ С СЕРВЕРОМ =====
 async function syncWithServer() {
     if (!currentUser || !currentUser.id) return;
@@ -19,7 +94,8 @@ async function syncWithServer() {
                 firstName:  currentUser.first_name || '',
                 username:   currentUser.username   || '',
                 habits:     habits   || [],
-                progress:   progress || {}
+                progress:   progress || {},
+                timezone:   getUserTimezone()   // ← ПЕРЕДАЁМ ЧАСОВОЙ ПОЯС
             })
         });
 
@@ -27,7 +103,6 @@ async function syncWithServer() {
             const data = await response.json();
             console.log('✅ Данные синхронизированы с сервером');
 
-            // Если на сервере данных больше — берём с сервера
             if (data.habits && data.habits.length >= habits.length) {
                 habits = data.habits;
                 lsSet('habits', habits);
@@ -92,72 +167,6 @@ async function subscribeToNotifications() {
     }
 }
 
-// ===== СБРОС СТАРОГО МУСОРА =====
-(function cleanOldUser() {
-    try {
-        const saved = localStorage.getItem('tgUser');
-        if (saved) {
-            const u = JSON.parse(saved);
-            if (!u || u.id === 0 || u.first_name === 'Гость' || u.first_name === 'Пользователь') {
-                localStorage.removeItem('tgUser');
-            }
-        }
-    } catch(e) {
-        localStorage.removeItem('tgUser');
-    }
-})();
-
-// ===== БЕЗОПАСНЫЙ localStorage =====
-function lsGet(key, fallback) {
-    try {
-        const val = localStorage.getItem(key);
-        if (val === null || val === undefined) return JSON.parse(fallback);
-        return JSON.parse(val);
-    } catch(e) {
-        return JSON.parse(fallback);
-    }
-}
-function lsSet(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch(e) {}
-}
-
-// ===== КОНСТАНТЫ =====
-const MONTHS      = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
-const MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const DAYS_FULL   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
-const DAY_KEYS    = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
-const DAYS_IN_MONTH = [31,28,29,31,30,31,30,31,31,30,31,30,31];
-
-// ===== ИКОНКИ =====
-const ICONS = [
-    '🏃','💪','📚','💧','🧘','🥗','😴','✍️',
-    '🎯','🎨','🎸','🏊','🚴','🧹','💊','🐶',
-    '🌅','🧠','🫁','🦷','🚶','🍎','☕','🧴',
-    '📝','🎤','🏋️','🤸','🌿','💤','🥤','🧘',
-    '📖','🖊️','🎹','🏄','🧗','🌙','⭐','🔥'
-];
-
-// ===== СОСТОЯНИЕ =====
-let habits   = lsGet('habits', '[]');
-let progress = lsGet('progress', '{}');
-let currentUser = null;
-
-let selectedIconValue = '⭐';
-let reminderOn        = false;
-let reminderTime      = '09:00'; // время уведомления по умолчанию
-let iconPickerOpen    = false;
-
-let currentDate = new Date();
-currentDate.setHours(0, 0, 0, 0);
-
-const dateState = {
-    day:   new Date().getDate(),
-    month: new Date().getMonth(),
-    year:  new Date().getFullYear()
-};
-
 // ===== ПОЛУЧИТЬ ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM =====
 function tryGetTelegramUser() {
     try {
@@ -203,7 +212,6 @@ function fakeTelegramLogin() {
         return;
     }
     renderProfile();
-    // После входа синхронизируем и загружаем данные
     loadFromServer();
     syncWithServer();
 }
@@ -315,7 +323,6 @@ function addProgress(id) {
         progress[key][id] = current + 1;
         lsSet('progress', progress);
         renderHabits();
-        // Синхронизируем после каждого прогресса
         syncWithServer();
     }
 }
@@ -324,7 +331,6 @@ function deleteHabit(id) {
     habits = habits.filter(h => h.id !== id);
     lsSet('habits', habits);
     renderHabits();
-    // Синхронизируем после удаления
     syncWithServer();
 }
 
@@ -348,7 +354,6 @@ function openModal() {
     document.getElementById('reminderToggle').classList.remove('on');
     document.getElementById('toggleLabel').textContent = 'нет';
 
-    // Скрываем поле времени если есть
     const timeWrap = document.getElementById('reminderTimeWrap');
     if (timeWrap) timeWrap.style.display = 'none';
 
@@ -433,7 +438,6 @@ function toggleReminder() {
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
     document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
 
-    // Показываем/скрываем поле выбора времени
     const timeWrap = document.getElementById('reminderTimeWrap');
     if (timeWrap) {
         timeWrap.style.display = reminderOn ? 'flex' : 'none';
@@ -483,7 +487,6 @@ function saveHabit() {
     closeModal();
     renderHabits();
 
-    // Синхронизируем и подписываем на уведомления
     syncWithServer();
     if (reminderOn) {
         subscribeToNotifications();
@@ -509,6 +512,10 @@ function renderProfile() {
         const usernameEl = document.getElementById('profileUsername');
         usernameEl.textContent = currentUser.username ? '@' + currentUser.username : '';
 
+        // Показываем часовой пояс
+        const tzLabel = document.getElementById('timezoneLabel');
+        if (tzLabel) tzLabel.textContent = getUserTimezone();
+
         if (currentUser.photo_url) {
             avatarEl.innerHTML = `<img src="${currentUser.photo_url}" alt="avatar">`;
         } else {
@@ -533,7 +540,6 @@ function renderProfile() {
         document.getElementById('statTotal').textContent = habits.length;
         document.getElementById('statDone').textContent  = doneToday;
 
-        // Показываем кнопку уведомлений если пользователь авторизован
         renderNotificationSettings();
 
     } else {
@@ -576,7 +582,6 @@ window.onload = async function() {
     renderHabits();
     renderProfile();
 
-    // Если пользователь авторизован — загружаем данные с сервера
     if (currentUser && currentUser.id) {
         await loadFromServer();
         await syncWithServer();
