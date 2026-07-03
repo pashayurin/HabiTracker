@@ -1,6 +1,7 @@
 // ===== СЕРВЕР =====
 const SERVER_URL = 'https://habitracker-server.onrender.com';
 
+// ===== БЕЗОПАСНЫЙ localStorage =====
 function lsGet(key, fallback) {
     try {
         const val = localStorage.getItem(key);
@@ -16,6 +17,7 @@ function lsSet(key, value) {
     } catch(e) {}
 }
 
+// ===== СБРОС СТАРОГО МУСОРА =====
 (function cleanOldUser() {
     try {
         const saved = localStorage.getItem('tgUser');
@@ -30,12 +32,14 @@ function lsSet(key, value) {
     }
 })();
 
+// ===== КОНСТАНТЫ =====
 const MONTHS      = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
 const MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const DAYS_FULL   = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 const DAY_KEYS    = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
 const DAYS_IN_MONTH = [31,28,29,31,30,31,30,31,31,30,31,30,31];
 
+// ===== ИКОНКИ =====
 const ICONS = [
     '🏃','💪','📚','💧','🧘','🥗','😴','✍️',
     '🎯','🎨','🎸','🏊','🚴','🧹','💊','🐶',
@@ -44,6 +48,7 @@ const ICONS = [
     '📖','🖊️','🎹','🏄','🧗','🌙','⭐','🔥'
 ];
 
+// ===== СОСТОЯНИЕ =====
 let habits   = lsGet('habits', '[]');
 let progress = lsGet('progress', '{}');
 let currentUser = null;
@@ -51,10 +56,10 @@ let currentUser = null;
 let selectedIconValue = '⭐';
 let reminderOn        = false;
 let reminderTime      = '09:00';
-let reminderType      = 'time';
-let reminderInterval  = 2;
-let reminderStart     = '08:00';
-let reminderEnd       = '22:00';
+let reminderType      = 'time';      // 'time' или 'interval'
+let reminderInterval  = 2;           // часов
+let reminderStart     = '08:00';     // начало окна интервала
+let reminderEnd       = '22:00';     // конец окна интервала
 let iconPickerOpen    = false;
 
 let currentDate = new Date();
@@ -66,6 +71,7 @@ const dateState = {
     year:  new Date().getFullYear()
 };
 
+// ===== ЧАСОВОЙ ПОЯС =====
 function getUserTimezone() {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow';
@@ -74,15 +80,19 @@ function getUserTimezone() {
     }
 }
 
+// ===== TELEGRAM INIT =====
 function initTelegram() {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
         }
-    } catch(e) {}
+    } catch(e) {
+        console.log('Telegram WebApp недоступен');
+    }
 }
 
+// ===== ПОЛУЧИТЬ ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM =====
 function tryGetTelegramUser() {
     try {
         if (
@@ -92,12 +102,15 @@ function tryGetTelegramUser() {
             window.Telegram.WebApp.initDataUnsafe.user
         ) {
             const u = window.Telegram.WebApp.initDataUnsafe.user;
-            if (u && u.id && u.id !== 0) return u;
+            if (u && u.id && u.id !== 0) {
+                return u;
+            }
         }
     } catch(e) {}
     return null;
 }
 
+// ===== АВТОВХОД =====
 function tryAutoLogin() {
     const tgUser = tryGetTelegramUser();
     if (tgUser) {
@@ -113,6 +126,7 @@ function tryAutoLogin() {
     }
 }
 
+// ===== КНОПКА ВОЙТИ =====
 function fakeTelegramLogin() {
     const tgUser = tryGetTelegramUser();
     if (tgUser) {
@@ -133,8 +147,10 @@ function logout() {
     renderProfile();
 }
 
+// ===== СИНХРОНИЗАЦИЯ С СЕРВЕРОМ =====
 async function syncWithServer() {
     if (!currentUser || !currentUser.id) return;
+
     try {
         const response = await fetch(`${SERVER_URL}/api/sync`, {
             method:  'POST',
@@ -148,8 +164,11 @@ async function syncWithServer() {
                 timezone:   getUserTimezone()
             })
         });
+
         if (response.ok) {
             const data = await response.json();
+            console.log('✅ Синхронизировано');
+
             if (data.habits && data.habits.length >= habits.length) {
                 habits = data.habits;
                 lsSet('habits', habits);
@@ -158,16 +177,19 @@ async function syncWithServer() {
                 progress = data.progress;
                 lsSet('progress', progress);
             }
+
             renderHabits();
             renderProfile();
         }
     } catch(e) {
-        console.log('⚠️ Офлайн режим');
+        console.log('⚠️ Сервер недоступен, работаем офлайн');
     }
 }
 
+// ===== ЗАГРУЗИТЬ ДАННЫЕ С СЕРВЕРА =====
 async function loadFromServer() {
     if (!currentUser || !currentUser.id) return;
+
     try {
         const response = await fetch(`${SERVER_URL}/api/user/${currentUser.id}`);
         if (response.ok) {
@@ -182,12 +204,14 @@ async function loadFromServer() {
             }
             renderHabits();
             renderProfile();
+            console.log('✅ Данные загружены с сервера');
         }
     } catch(e) {
         console.log('⚠️ Не удалось загрузить с сервера');
     }
 }
 
+// ===== ПОДПИСКА НА УВЕДОМЛЕНИЯ =====
 async function subscribeToNotifications() {
     if (!currentUser || !currentUser.id) return;
     try {
@@ -202,6 +226,7 @@ async function subscribeToNotifications() {
     } catch(e) {}
 }
 
+// ===== УТИЛИТЫ ДАТЫ =====
 function dateKey(d) {
     const y   = d.getFullYear();
     const m   = String(d.getMonth() + 1).padStart(2, '0');
@@ -234,6 +259,7 @@ function changeMainDate(dir) {
     renderHabits();
 }
 
+// ===== НАВИГАЦИЯ =====
 function showPage(name, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -242,6 +268,7 @@ function showPage(name, el) {
     if (name === 'profile') renderProfile();
 }
 
+// ===== РЕНДЕР ПРИВЫЧЕК =====
 function renderHabits() {
     const list = document.getElementById('habitsList');
     if (!list) return;
@@ -291,7 +318,7 @@ function renderHabits() {
 }
 
 function addProgress(id) {
-    const key = dateKey(currentDate);
+    const key   = dateKey(currentDate);
     if (!progress[key]) progress[key] = {};
     const habit = habits.find(h => h.id === id);
     if (!habit) return;
@@ -311,6 +338,7 @@ function deleteHabit(id) {
     syncWithServer();
 }
 
+// ===== МОДАЛКА =====
 function openModal() {
     const now       = new Date();
     dateState.day   = now.getDate();
@@ -325,6 +353,7 @@ function openModal() {
     selectedIconValue = '⭐';
     document.getElementById('selectedIcon').textContent = '⭐';
 
+    // Сброс напоминания
     reminderOn       = false;
     reminderTime     = '09:00';
     reminderType     = 'time';
@@ -336,14 +365,15 @@ function openModal() {
     document.getElementById('toggleLabel').textContent = 'нет';
     document.getElementById('reminderTimeWrap').style.display = 'none';
 
+    // Сброс типа напоминания
     document.getElementById('typeBtnTime').classList.add('active');
     document.getElementById('typeBtnInterval').classList.remove('active');
-    document.getElementById('reminderExactTime').style.display    = 'block';
+    document.getElementById('reminderExactTime').style.display = 'block';
     document.getElementById('reminderIntervalWrap').style.display = 'none';
-    document.getElementById('reminderTimeInput').value     = '09:00';
+    document.getElementById('reminderTimeInput').value  = '09:00';
     document.getElementById('reminderIntervalInput').value = '2';
-    document.getElementById('intervalStartInput').value    = '08:00';
-    document.getElementById('intervalEndInput').value      = '22:00';
+    document.getElementById('intervalStartInput').value = '08:00';
+    document.getElementById('intervalEndInput').value   = '22:00';
 
     document.querySelectorAll('.day-btn:not(.day-btn-all)').forEach(b => b.classList.remove('active'));
 
@@ -364,6 +394,7 @@ function closeModalOutside(e) {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
+// ===== ИКОНКИ =====
 function buildIconGrid() {
     const grid = document.getElementById('iconGrid');
     grid.innerHTML = ICONS.map(ic =>
@@ -384,6 +415,7 @@ function selectIcon(ic) {
     iconPickerOpen = false;
 }
 
+// ===== ДАТА В МОДАЛКЕ =====
 function changeDate(type, dir) {
     if (type === 'day') {
         const max     = DAYS_IN_MONTH[dateState.month];
@@ -404,6 +436,7 @@ function updateDateDisplay() {
     document.getElementById('startYear').textContent  = dateState.year;
 }
 
+// ===== ДНИ НЕДЕЛИ =====
 function toggleDay(btn) {
     btn.classList.toggle('active');
 }
@@ -417,6 +450,7 @@ function toggleAllDays(btn) {
     });
 }
 
+// ===== НАПОМИНАНИЕ =====
 function toggleReminder() {
     reminderOn = !reminderOn;
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
@@ -428,14 +462,18 @@ function setReminderTime(val) {
     reminderTime = val;
 }
 
+// ===== ТИП НАПОМИНАНИЯ =====
 function setReminderType(type) {
     reminderType = type;
+
     document.getElementById('typeBtnTime').classList.toggle('active', type === 'time');
     document.getElementById('typeBtnInterval').classList.toggle('active', type === 'interval');
+
     document.getElementById('reminderExactTime').style.display    = type === 'time'     ? 'block' : 'none';
     document.getElementById('reminderIntervalWrap').style.display = type === 'interval' ? 'block' : 'none';
 }
 
+// ===== СОХРАНИТЬ ПРИВЫЧКУ =====
 function saveHabit() {
     const nameInput = document.getElementById('habitName');
     const name      = nameInput.value.trim();
@@ -457,6 +495,7 @@ function saveHabit() {
     const startMonth = String(dateState.month + 1).padStart(2, '0');
     const startDay   = String(dateState.day).padStart(2, '0');
 
+    // Собираем данные напоминания
     let habitReminder     = false;
     let habitReminderTime = null;
     let habitReminderType = null;
@@ -467,6 +506,7 @@ function saveHabit() {
     if (reminderOn) {
         habitReminder     = true;
         habitReminderType = reminderType;
+
         if (reminderType === 'time') {
             habitReminderTime = document.getElementById('reminderTimeInput').value;
         } else {
@@ -500,6 +540,7 @@ function saveHabit() {
     if (reminderOn) subscribeToNotifications();
 }
 
+// ===== ПРОФИЛЬ =====
 function renderProfile() {
     const guestEl  = document.getElementById('profileGuest');
     const userEl   = document.getElementById('profileUser');
@@ -555,6 +596,7 @@ function renderProfile() {
     }
 }
 
+// ===== НАСТРОЙКИ УВЕДОМЛЕНИЙ В ПРОФИЛЕ =====
 function renderNotificationSettings() {
     const container = document.getElementById('notificationSettings');
     if (!container) return;
@@ -586,19 +628,28 @@ function renderNotificationSettings() {
     }).join('');
 }
 
+// ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', function() {
+
     initTelegram();
+
     setTimeout(async function() {
+
         tryAutoLogin();
         renderDateLabel();
         renderHabits();
         renderProfile();
+
         if (currentUser && currentUser.id) {
             await loadFromServer();
             await syncWithServer();
         }
+
         setInterval(() => {
-            if (currentUser && currentUser.id) syncWithServer();
+            if (currentUser && currentUser.id) {
+                syncWithServer();
+            }
         }, 5 * 60 * 1000);
+
     }, 300);
 });
