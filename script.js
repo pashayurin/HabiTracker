@@ -56,6 +56,10 @@ let currentUser = null;
 let selectedIconValue = '⭐';
 let reminderOn        = false;
 let reminderTime      = '09:00';
+let reminderType      = 'time';      // 'time' или 'interval'
+let reminderInterval  = 2;           // часов
+let reminderStart     = '08:00';     // начало окна интервала
+let reminderEnd       = '22:00';     // конец окна интервала
 let iconPickerOpen    = false;
 
 let currentDate = new Date();
@@ -349,13 +353,27 @@ function openModal() {
     selectedIconValue = '⭐';
     document.getElementById('selectedIcon').textContent = '⭐';
 
-    reminderOn   = false;
-    reminderTime = '09:00';
+    // Сброс напоминания
+    reminderOn       = false;
+    reminderTime     = '09:00';
+    reminderType     = 'time';
+    reminderInterval = 2;
+    reminderStart    = '08:00';
+    reminderEnd      = '22:00';
+
     document.getElementById('reminderToggle').classList.remove('on');
     document.getElementById('toggleLabel').textContent = 'нет';
+    document.getElementById('reminderTimeWrap').style.display = 'none';
 
-    const timeWrap = document.getElementById('reminderTimeWrap');
-    if (timeWrap) timeWrap.style.display = 'none';
+    // Сброс типа напоминания
+    document.getElementById('typeBtnTime').classList.add('active');
+    document.getElementById('typeBtnInterval').classList.remove('active');
+    document.getElementById('reminderExactTime').style.display = 'block';
+    document.getElementById('reminderIntervalWrap').style.display = 'none';
+    document.getElementById('reminderTimeInput').value  = '09:00';
+    document.getElementById('reminderIntervalInput').value = '2';
+    document.getElementById('intervalStartInput').value = '08:00';
+    document.getElementById('intervalEndInput').value   = '22:00';
 
     document.querySelectorAll('.day-btn:not(.day-btn-all)').forEach(b => b.classList.remove('active'));
 
@@ -437,15 +455,22 @@ function toggleReminder() {
     reminderOn = !reminderOn;
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
     document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
-
-    const timeWrap = document.getElementById('reminderTimeWrap');
-    if (timeWrap) {
-        timeWrap.style.display = reminderOn ? 'flex' : 'none';
-    }
+    document.getElementById('reminderTimeWrap').style.display = reminderOn ? 'block' : 'none';
 }
 
 function setReminderTime(val) {
     reminderTime = val;
+}
+
+// ===== ТИП НАПОМИНАНИЯ =====
+function setReminderType(type) {
+    reminderType = type;
+
+    document.getElementById('typeBtnTime').classList.toggle('active', type === 'time');
+    document.getElementById('typeBtnInterval').classList.toggle('active', type === 'interval');
+
+    document.getElementById('reminderExactTime').style.display    = type === 'time'     ? 'block' : 'none';
+    document.getElementById('reminderIntervalWrap').style.display = type === 'interval' ? 'block' : 'none';
 }
 
 // ===== СОХРАНИТЬ ПРИВЫЧКУ =====
@@ -470,23 +495,47 @@ function saveHabit() {
     const startMonth = String(dateState.month + 1).padStart(2, '0');
     const startDay   = String(dateState.day).padStart(2, '0');
 
+    // Собираем данные напоминания
+    let habitReminder     = false;
+    let habitReminderTime = null;
+    let habitReminderType = null;
+    let habitInterval     = null;
+    let habitIntStart     = null;
+    let habitIntEnd       = null;
+
+    if (reminderOn) {
+        habitReminder     = true;
+        habitReminderType = reminderType;
+
+        if (reminderType === 'time') {
+            habitReminderTime = document.getElementById('reminderTimeInput').value;
+        } else {
+            habitInterval = parseInt(document.getElementById('reminderIntervalInput').value) || 2;
+            habitIntStart = document.getElementById('intervalStartInput').value;
+            habitIntEnd   = document.getElementById('intervalEndInput').value;
+        }
+    }
+
     const habit = {
-        id:           Date.now().toString(),
+        id:               Date.now().toString(),
         name,
         icon,
         count,
         unit,
-        reminder:     reminderOn,
-        reminderTime: reminderOn ? reminderTime : null,
-        days:         activeDays,
-        startDate:    `${dateState.year}-${startMonth}-${startDay}`
+        reminder:         habitReminder,
+        reminderType:     habitReminderType,
+        reminderTime:     habitReminderTime,
+        reminderInterval: habitInterval,
+        intervalStart:    habitIntStart,
+        intervalEnd:      habitIntEnd,
+        days:             activeDays,
+        startDate:        `${dateState.year}-${startMonth}-${startDay}`
     };
 
     habits.push(habit);
     lsSet('habits', habits);
     closeModal();
     renderHabits();
-
     syncWithServer();
     if (reminderOn) subscribeToNotifications();
 }
@@ -510,7 +559,6 @@ function renderProfile() {
         const usernameEl = document.getElementById('profileUsername');
         usernameEl.textContent = currentUser.username ? '@' + currentUser.username : '';
 
-        // Показываем часовой пояс
         const tzLabel = document.getElementById('timezoneLabel');
         if (tzLabel) tzLabel.textContent = getUserTimezone();
 
@@ -553,53 +601,55 @@ function renderNotificationSettings() {
     const container = document.getElementById('notificationSettings');
     if (!container) return;
 
-    const habitsWithReminder = habits.filter(h => h.reminder && h.reminderTime);
+    const habitsWithReminder = habits.filter(h => h.reminder);
 
     if (habitsWithReminder.length === 0) {
         container.innerHTML = `
-            <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:8px 0;">
+            <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:8px 0;">
                 Нет активных напоминаний.<br>
                 Добавьте привычку с напоминанием.
             </div>`;
         return;
     }
 
-    container.innerHTML = habitsWithReminder.map(h => `
+    container.innerHTML = habitsWithReminder.map(h => {
+        let reminderInfo = '';
+        if (h.reminderType === 'interval') {
+            reminderInfo = `🔁 каждые ${h.reminderInterval} ч (${h.intervalStart}–${h.intervalEnd})`;
+        } else {
+            reminderInfo = `⏰ ${h.reminderTime}`;
+        }
+        return `
         <div style="display:flex;align-items:center;justify-content:space-between;
                     padding:8px 0;border-bottom:1px solid var(--border);">
             <span>${h.icon} ${h.name}</span>
-            <span style="color:var(--primary);font-weight:600;">⏰ ${h.reminderTime}</span>
-        </div>
-    `).join('');
+            <span style="color:var(--primary);font-weight:600;font-size:12px;">${reminderInfo}</span>
+        </div>`;
+    }).join('');
 }
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
-// Используем DOMContentLoaded вместо window.onload — быстрее и надёжнее
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Инициализируем Telegram
     initTelegram();
 
-    // Небольшая задержка чтобы Telegram WebApp успел загрузиться
     setTimeout(async function() {
 
         tryAutoLogin();
-        renderDateLabel();   // ← Рендерим дату сразу
-        renderHabits();      // ← Рендерим привычки сразу
-        renderProfile();     // ← Рендерим профиль сразу
+        renderDateLabel();
+        renderHabits();
+        renderProfile();
 
-        // Если пользователь авторизован — загружаем данные с сервера
         if (currentUser && currentUser.id) {
             await loadFromServer();
             await syncWithServer();
         }
 
-        // Автосинхронизация каждые 5 минут
         setInterval(() => {
             if (currentUser && currentUser.id) {
                 syncWithServer();
             }
         }, 5 * 60 * 1000);
 
-    }, 300); // 300мс задержка для Telegram WebApp
+    }, 300);
 });
