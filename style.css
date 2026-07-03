@@ -631,7 +631,7 @@ body {
     padding-right: 24px;
 }
 
-/* ===== ДАТА В МОДАЛКЕ — ИСПРАВЛЕНО ===== */
+/* ===== ДАТА В МОДАЛКЕ ===== */
 .setting-row.date-row {
     flex-direction: column;
     align-items: flex-start;
@@ -795,7 +795,6 @@ body {
     box-shadow: 0 4px 15px rgba(108,99,255,0.4);
     transition: opacity 0.2s, transform 0.15s;
 }
-
 .btn-save:active { opacity: 0.85; transform: scale(0.97); }
 
 /* ===== БЛОК УВЕДОМЛЕНИЙ ===== */
@@ -829,4 +828,39 @@ body {
 }
 .setting-time-input:focus {
     border-color: var(--primary);
+}
+
+/* ===== ТИП НАПОМИНАНИЯ ===== */
+.reminder-type-toggle {
+    display: flex;
+    gap: 0;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 3px;
+    overflow: hidden;
+}
+.type-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', Arial, sans-serif;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.type-btn.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(108,99,255,0.35);
+}
+.type-btn:not(.active):hover {
+    background: var(--primary-light);
+    color: var(--primary);
 }
