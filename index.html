@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -62,11 +62,7 @@
 
             <div class="notifications-block">
                 <div class="notifications-title">🔔 Напоминания</div>
-                <div id="notificationSettings">
-                    <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:8px 0;">
-                        Нет активных напоминаний
-                    </div>
-                </div>
+                <div id="notificationSettings"></div>
             </div>
 
             <button class="btn-logout" onclick="logout()">Выйти</button>
@@ -110,7 +106,7 @@
             <span class="help-icon">🔔</span>
             <div>
                 <p class="help-q">Как включить напоминания?</p>
-                <p class="help-a">При добавлении привычки включите тумблер «напоминания» и выберите время</p>
+                <p class="help-a">При добавлении привычки включите тумблер «напоминания» и выберите тип: в конкретное время или каждые N часов</p>
             </div>
         </div>
         <div class="help-item">
@@ -234,19 +230,62 @@
                 </div>
             </div>
 
-            <!-- ===== ВРЕМЯ НАПОМИНАНИЯ ===== -->
+            <!-- ===== НАСТРОЙКИ НАПОМИНАНИЯ ===== -->
             <div id="reminderTimeWrap" style="display:none;">
+
                 <div class="divider"></div>
+
+                <!-- Тип: в время / каждые N часов -->
                 <div class="setting-row">
-                    <span class="setting-label">время напоминания</span>
-                    <input
-                        type="time"
-                        id="reminderTimeInput"
-                        value="09:00"
-                        onchange="setReminderTime(this.value)"
-                        class="setting-time-input"
-                    >
+                    <span class="setting-label">тип</span>
+                    <div class="reminder-type-toggle">
+                        <button class="type-btn active" id="typeBtnTime" onclick="setReminderType('time')">в время</button>
+                        <button class="type-btn" id="typeBtnInterval" onclick="setReminderType('interval')">каждые N ч</button>
+                    </div>
                 </div>
+
+                <!-- Конкретное время -->
+                <div id="reminderExactTime">
+                    <div class="divider"></div>
+                    <div class="setting-row">
+                        <span class="setting-label">время</span>
+                        <input
+                            type="time"
+                            id="reminderTimeInput"
+                            value="09:00"
+                            onchange="setReminderTime(this.value)"
+                            class="setting-time-input"
+                        >
+                    </div>
+                </div>
+
+                <!-- Интервал -->
+                <div id="reminderIntervalWrap" style="display:none;">
+                    <div class="divider"></div>
+                    <div class="setting-row">
+                        <span class="setting-label">каждые</span>
+                        <select class="setting-select" id="reminderIntervalInput">
+                            <option value="1">1 час</option>
+                            <option value="2" selected>2 часа</option>
+                            <option value="3">3 часа</option>
+                            <option value="4">4 часа</option>
+                            <option value="6">6 часов</option>
+                            <option value="8">8 часов</option>
+                            <option value="12">12 часов</option>
+                        </select>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="setting-row">
+                        <span class="setting-label">с</span>
+                        <input type="time" id="intervalStartInput" value="08:00" class="setting-time-input">
+                    </div>
+                    <div class="divider"></div>
+                    <div class="setting-row">
+                        <span class="setting-label">до</span>
+                        <input type="time" id="intervalEndInput" value="22:00" class="setting-time-input">
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -259,6 +298,6 @@
     </div>
 </div>
 
-<script src="script.js?v=7"></script>
+<script src="script.js?v=8"></script>
 </body>
 </html>
