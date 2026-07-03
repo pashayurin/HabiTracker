@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 
@@ -16,7 +16,6 @@
     <h1 class="app-title">HabiTracker</h1>
 </header>
 
-<!-- ===== ГЛАВНАЯ ===== -->
 <main class="content page active" id="page-home">
     <div class="date-nav-bar">
         <button class="date-nav-arrow" onclick="changeMainDate(-1)">&#8249;</button>
@@ -27,12 +26,10 @@
     <div class="habits-list" id="habitsList"></div>
 </main>
 
-<!-- ===== ПРОФИЛЬ ===== -->
 <main class="content page" id="page-profile">
     <div class="profile-box">
         <div class="profile-avatar" id="profileAvatar">👤</div>
 
-        <!-- Гость -->
         <div id="profileGuest">
             <p class="profile-hint">Войдите через Telegram,<br>чтобы сохранять привычки</p>
             <button class="btn-tg-login" onclick="fakeTelegramLogin()">
@@ -40,7 +37,6 @@
             </button>
         </div>
 
-        <!-- Авторизован -->
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername"></p>
@@ -70,7 +66,6 @@
     </div>
 </main>
 
-<!-- ===== ПОМОЩЬ ===== -->
 <main class="content page" id="page-help">
     <div class="help-box">
         <h2 class="help-title">Помощь</h2>
@@ -126,7 +121,6 @@
     </div>
 </main>
 
-<!-- ===== НАВИГАЦИЯ ===== -->
 <nav class="bottom-bar">
     <div class="nav-item active" onclick="showPage('home', this)">
         <span class="nav-icon">🏠</span>
@@ -142,7 +136,6 @@
     </div>
 </nav>
 
-<!-- ===== МОДАЛКА ===== -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
     <div class="modal">
 
@@ -180,7 +173,6 @@
             </div>
             <div class="divider"></div>
 
-            <!-- ===== ДАТА ===== -->
             <div class="setting-row date-row">
                 <span class="setting-label">дата начала</span>
                 <div class="date-inputs">
@@ -203,7 +195,6 @@
             </div>
             <div class="divider"></div>
 
-            <!-- ===== ДНИ НЕДЕЛИ ===== -->
             <div class="setting-row setting-row-wrap">
                 <span class="setting-label">по каким дням недели</span>
                 <div class="days-row">
@@ -219,7 +210,6 @@
             </div>
             <div class="divider"></div>
 
-            <!-- ===== НАПОМИНАНИЯ ===== -->
             <div class="setting-row">
                 <span class="setting-label">напоминания</span>
                 <div class="toggle-wrap">
@@ -230,12 +220,10 @@
                 </div>
             </div>
 
-            <!-- ===== НАСТРОЙКИ НАПОМИНАНИЯ ===== -->
             <div id="reminderTimeWrap" style="display:none;">
 
                 <div class="divider"></div>
 
-                <!-- Тип -->
                 <div class="setting-row">
                     <span class="setting-label">тип</span>
                     <div class="reminder-type-toggle">
@@ -244,22 +232,14 @@
                     </div>
                 </div>
 
-                <!-- Конкретное время -->
                 <div id="reminderExactTime">
                     <div class="divider"></div>
                     <div class="setting-row">
                         <span class="setting-label">время</span>
-                        <input
-                            type="time"
-                            id="reminderTimeInput"
-                            value="09:00"
-                            onchange="setReminderTime(this.value)"
-                            class="setting-time-input"
-                        >
+                        <input type="time" id="reminderTimeInput" value="09:00" onchange="setReminderTime(this.value)" class="setting-time-input">
                     </div>
                 </div>
 
-                <!-- Интервал -->
                 <div id="reminderIntervalWrap" style="display:none;">
                     <div class="divider"></div>
                     <div class="setting-row">
@@ -276,13 +256,25 @@
                     </div>
                     <div class="divider"></div>
                     <div class="setting-row">
-                        <span class="setting-label">с</span>
-                        <input type="time" id="intervalStartInput" value="08:00" class="setting-time-input">
+                        <span class="setting-label">весь день</span>
+                        <div class="toggle-wrap">
+                            <span class="toggle-label" id="allDayLabel">нет</span>
+                            <div class="toggle" id="allDayToggle" onclick="toggleAllDay()">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="divider"></div>
-                    <div class="setting-row">
-                        <span class="setting-label">до</span>
-                        <input type="time" id="intervalEndInput" value="22:00" class="setting-time-input">
+                    <div id="intervalTimeRange">
+                        <div class="divider"></div>
+                        <div class="setting-row">
+                            <span class="setting-label">с</span>
+                            <input type="time" id="intervalStartInput" value="08:00" class="setting-time-input">
+                        </div>
+                        <div class="divider"></div>
+                        <div class="setting-row">
+                            <span class="setting-label">до</span>
+                            <input type="time" id="intervalEndInput" value="22:00" class="setting-time-input">
+                        </div>
                     </div>
                 </div>
 
@@ -298,6 +290,6 @@
     </div>
 </div>
 
-<script src="script.js?v=9"></script>
+<script src="script.js?v=11"></script>
 </body>
 </html>
