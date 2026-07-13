@@ -58,6 +58,10 @@ let reminderEnd       = '22:00';
 let allDayReminder    = false;
 let iconPickerOpen    = false;
 
+// ✅ режим выбора дней
+let dayMode        = 'weekday';
+let dayIntervalVal = 2;
+
 let currentDate = new Date();
 currentDate.setHours(0, 0, 0, 0);
 
@@ -189,20 +193,6 @@ async function loadFromServer() {
     }
 }
 
-async function subscribeToNotifications() {
-    if (!currentUser || !currentUser.id) return;
-    try {
-        await fetch(`${SERVER_URL}/api/subscribe`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                habits:     habits || []
-            })
-        });
-    } catch(e) {}
-}
-
 function dateKey(d) {
     const y   = d.getFullYear();
     const m   = String(d.getMonth() + 1).padStart(2, '0');
@@ -243,18 +233,29 @@ function showPage(name, el) {
     if (name === 'profile') renderProfile();
 }
 
+// ✅ Проверка активности привычки на дату (оба режима)
+function isHabitActiveOnDate(habit, date) {
+    if (habit.dayMode === 'interval' && habit.dayInterval) {
+        const start = habit.startDate ? new Date(habit.startDate) : new Date();
+        start.setHours(0, 0, 0, 0);
+        const target = new Date(date);
+        target.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((target - start) / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) return false;
+        return diffDays % habit.dayInterval === 0;
+    }
+    if (!habit.days || habit.days.length === 0) return true;
+    const currentDay = DAY_KEYS[date.getDay()];
+    return habit.days.includes(currentDay);
+}
+
 function renderHabits() {
     const list = document.getElementById('habitsList');
     if (!list) return;
 
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-    const currentDay    = DAY_KEYS[currentDate.getDay()];
-
-    const filtered = habits.filter(h => {
-        if (!h.days || h.days.length === 0) return true;
-        return h.days.includes(currentDay);
-    });
+    const filtered      = habits.filter(h => isHabitActiveOnDate(h, currentDate));
 
     if (filtered.length === 0) {
         list.innerHTML = `
@@ -312,6 +313,21 @@ function deleteHabit(id) {
     syncWithServer();
 }
 
+// ✅ Переключение режима дней
+function setDayMode(mode) {
+    dayMode = mode;
+    document.getElementById('dayModeWeekday').classList.toggle('active', mode === 'weekday');
+    document.getElementById('dayModeInterval').classList.toggle('active', mode === 'interval');
+    document.getElementById('weekdayPicker').style.display     = mode === 'weekday'  ? 'block' : 'none';
+    document.getElementById('intervalDayPicker').style.display = mode === 'interval' ? 'block' : 'none';
+}
+
+// ✅ Изменение интервала дней
+function changeDayInterval(dir) {
+    dayIntervalVal = Math.max(2, Math.min(30, dayIntervalVal + dir));
+    document.getElementById('dayIntervalValue').textContent = dayIntervalVal;
+}
+
 function openModal() {
     const now       = new Date();
     dateState.day   = now.getDate();
@@ -334,8 +350,17 @@ function openModal() {
     reminderEnd      = '22:00';
     allDayReminder   = false;
 
+    // Сброс режима дней
+    dayMode        = 'weekday';
+    dayIntervalVal = 2;
+    document.getElementById('dayModeWeekday').classList.add('active');
+    document.getElementById('dayModeInterval').classList.remove('active');
+    document.getElementById('weekdayPicker').style.display     = 'block';
+    document.getElementById('intervalDayPicker').style.display = 'none';
+    document.getElementById('dayIntervalValue').textContent    = '2';
+
     document.getElementById('reminderToggle').classList.remove('on');
-    document.getElementById('toggleLabel').textContent = 'нет';
+    document.getElementById('toggleLabel').textContent        = 'нет';
     document.getElementById('reminderTimeWrap').style.display = 'none';
 
     document.getElementById('typeBtnTime').classList.add('active');
@@ -348,7 +373,7 @@ function openModal() {
     document.getElementById('intervalEndInput').value      = '22:00';
 
     document.getElementById('allDayToggle').classList.remove('on');
-    document.getElementById('allDayLabel').textContent      = 'нет';
+    document.getElementById('allDayLabel').textContent         = 'нет';
     document.getElementById('intervalTimeRange').style.display = 'block';
 
     document.querySelectorAll('.day-btn:not(.day-btn-all)').forEach(b => b.classList.remove('active'));
@@ -426,7 +451,7 @@ function toggleAllDays(btn) {
 function toggleReminder() {
     reminderOn = !reminderOn;
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
-    document.getElementById('toggleLabel').textContent = reminderOn ? 'да' : 'нет';
+    document.getElementById('toggleLabel').textContent        = reminderOn ? 'да' : 'нет';
     document.getElementById('reminderTimeWrap').style.display = reminderOn ? 'block' : 'none';
 }
 
@@ -445,7 +470,7 @@ function setReminderType(type) {
 function toggleAllDay() {
     allDayReminder = !allDayReminder;
     document.getElementById('allDayToggle').classList.toggle('on', allDayReminder);
-    document.getElementById('allDayLabel').textContent = allDayReminder ? 'да' : 'нет';
+    document.getElementById('allDayLabel').textContent         = allDayReminder ? 'да' : 'нет';
     document.getElementById('intervalTimeRange').style.display = allDayReminder ? 'none' : 'block';
 }
 
@@ -464,34 +489,46 @@ function saveHabit() {
     const unit  = document.getElementById('habitUnit').value;
     const icon  = selectedIconValue || '⭐';
 
-    const activeDays = [...document.querySelectorAll('.day-btn:not(.day-btn-all).active')]
-        .map(b => b.textContent);
-
     const startMonth = String(dateState.month + 1).padStart(2, '0');
     const startDay   = String(dateState.day).padStart(2, '0');
+    const startDate  = `${dateState.year}-${startMonth}-${startDay}`;
 
-    let habitReminder     = false;
-    let habitReminderTime = null;
-    let habitReminderType = null;
-    let habitInterval     = null;
-    let habitIntStart     = null;
-    let habitIntEnd       = null;
-    let habitAllDay       = false;
+    // ✅ Дни — зависит от режима
+    let activeDays   = [];
+    let habitDayMode = dayMode;
+    let habitDayInterval = null;
+
+    if (dayMode === 'weekday') {
+        activeDays = [...document.querySelectorAll('.day-btn:not(.day-btn-all).active')]
+            .map(b => b.textContent);
+    } else {
+        habitDayInterval = dayIntervalVal;
+    }
+
+    // ✅ Напоминания — синхронизированы с днями
+    let habitReminder         = false;
+    let habitReminderTime     = null;
+    let habitReminderType     = null;
+    let habitReminderInterval = null;
+    let habitReminderStart    = null;
+    let habitReminderEnd      = null;
+    let habitReminderAllDay   = false;
 
     if (reminderOn) {
         habitReminder     = true;
         habitReminderType = reminderType;
+
         if (reminderType === 'time') {
             habitReminderTime = document.getElementById('reminderTimeInput').value;
         } else {
-            habitInterval = parseInt(document.getElementById('reminderIntervalInput').value) || 2;
-            habitAllDay   = allDayReminder;
+            habitReminderInterval = parseInt(document.getElementById('reminderIntervalInput').value) || 2;
+            habitReminderAllDay   = allDayReminder;
             if (!allDayReminder) {
-                habitIntStart = document.getElementById('intervalStartInput').value;
-                habitIntEnd   = document.getElementById('intervalEndInput').value;
+                habitReminderStart = document.getElementById('intervalStartInput').value;
+                habitReminderEnd   = document.getElementById('intervalEndInput').value;
             } else {
-                habitIntStart = '00:00';
-                habitIntEnd   = '23:59';
+                habitReminderStart = '00:00';
+                habitReminderEnd   = '23:59';
             }
         }
     }
@@ -502,15 +539,18 @@ function saveHabit() {
         icon,
         count,
         unit,
+        dayMode:          habitDayMode,
+        dayInterval:      habitDayInterval,
         reminder:         habitReminder,
         reminderType:     habitReminderType,
         reminderTime:     habitReminderTime,
-        reminderInterval: habitInterval,
-        intervalStart:    habitIntStart,
-        intervalEnd:      habitIntEnd,
-        allDay:           habitAllDay,
+        reminderInterval: habitReminderInterval,
+        reminderAllDay:   habitReminderAllDay,
+        reminderStart:    habitReminderStart,
+        reminderEnd:      habitReminderEnd,
+        // ✅ days используется только в режиме weekday
         days:             activeDays,
-        startDate:        `${dateState.year}-${startMonth}-${startDay}`
+        startDate
     };
 
     habits.push(habit);
@@ -518,7 +558,6 @@ function saveHabit() {
     closeModal();
     renderHabits();
     syncWithServer();
-    if (reminderOn) subscribeToNotifications();
 }
 
 function renderProfile() {
@@ -594,19 +633,33 @@ function renderNotificationSettings() {
     container.innerHTML = habitsWithReminder.map(h => {
         let reminderInfo = '';
         if (h.reminderType === 'interval') {
-            if (h.allDay) {
+            if (h.reminderAllDay) {
                 reminderInfo = `🔁 каждые ${h.reminderInterval} ч (весь день)`;
             } else {
-                reminderInfo = `🔁 каждые ${h.reminderInterval} ч (${h.intervalStart}–${h.intervalEnd})`;
+                reminderInfo = `🔁 каждые ${h.reminderInterval} ч (${h.reminderStart}–${h.reminderEnd})`;
             }
         } else {
             reminderInfo = `⏰ ${h.reminderTime}`;
         }
+
+        // ✅ Показываем информацию о днях
+        let daysInfo = '';
+        if (h.dayMode === 'interval') {
+            daysInfo = `каждые ${h.dayInterval} дн.`;
+        } else if (h.days && h.days.length > 0) {
+            daysInfo = h.days.join(', ');
+        } else {
+            daysInfo = 'каждый день';
+        }
+
         return `
         <div style="display:flex;align-items:center;justify-content:space-between;
-                    padding:8px 0;border-bottom:1px solid var(--border);">
-            <span>${h.icon} ${h.name}</span>
-            <span style="color:var(--primary);font-weight:600;font-size:12px;">${reminderInfo}</span>
+                    padding:8px 0;border-bottom:1px solid var(--border);gap:8px;">
+            <span style="font-size:13px;">${h.icon} ${h.name}</span>
+            <div style="text-align:right;">
+                <div style="color:var(--primary);font-weight:600;font-size:12px;">${reminderInfo}</div>
+                <div style="color:var(--text-muted);font-size:11px;">${daysInfo}</div>
+            </div>
         </div>`;
     }).join('');
 }
