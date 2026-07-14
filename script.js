@@ -58,7 +58,6 @@ let reminderEnd       = '22:00';
 let allDayReminder    = false;
 let iconPickerOpen    = false;
 
-// ✅ режим выбора дней
 let dayMode        = 'weekday';
 let dayIntervalVal = 2;
 
@@ -70,6 +69,8 @@ const dateState = {
     month: new Date().getMonth(),
     year:  new Date().getFullYear()
 };
+
+// ===========================================
 
 function getUserTimezone() {
     try {
@@ -138,6 +139,8 @@ function logout() {
     renderProfile();
 }
 
+// ===========================================
+
 async function syncWithServer() {
     if (!currentUser || !currentUser.id) return;
     try {
@@ -193,6 +196,8 @@ async function loadFromServer() {
     }
 }
 
+// ===========================================
+
 function dateKey(d) {
     const y   = d.getFullYear();
     const m   = String(d.getMonth() + 1).padStart(2, '0');
@@ -233,7 +238,8 @@ function showPage(name, el) {
     if (name === 'profile') renderProfile();
 }
 
-// ✅ Проверка активности привычки на дату (оба режима)
+// ===========================================
+
 function isHabitActiveOnDate(habit, date) {
     if (habit.dayMode === 'interval' && habit.dayInterval) {
         const start = habit.startDate ? new Date(habit.startDate) : new Date();
@@ -313,7 +319,10 @@ function deleteHabit(id) {
     syncWithServer();
 }
 
-// ✅ Переключение режима дней
+// ===========================================
+// ===== РЕЖИМ ДНЕЙ =====
+// ===========================================
+
 function setDayMode(mode) {
     dayMode = mode;
     document.getElementById('dayModeWeekday').classList.toggle('active', mode === 'weekday');
@@ -322,11 +331,51 @@ function setDayMode(mode) {
     document.getElementById('intervalDayPicker').style.display = mode === 'interval' ? 'block' : 'none';
 }
 
-// ✅ Изменение интервала дней
+// ✅ Кнопки − и + меняют значение
 function changeDayInterval(dir) {
-    dayIntervalVal = Math.max(2, Math.min(30, dayIntervalVal + dir));
-    document.getElementById('dayIntervalValue').textContent = dayIntervalVal;
+    const input = document.getElementById('dayIntervalValue');
+    let val = parseInt(input.value) || 2;
+    val = Math.max(2, Math.min(365, val + dir));
+    dayIntervalVal = val;
+    input.value = val;
 }
+
+// ✅ Ввод вручную — валидация
+function syncDayIntervalInput(input) {
+    let val = parseInt(input.value);
+    if (isNaN(val) || val < 2)   val = 2;
+    if (val > 365) val = 365;
+    dayIntervalVal = val;
+    // Не перезаписываем input.value прямо здесь — только при blur
+}
+
+// ✅ При потере фокуса — финальная валидация
+function fixDayIntervalInput(input) {
+    let val = parseInt(input.value);
+    if (isNaN(val) || val < 2)   val = 2;
+    if (val > 365) val = 365;
+    dayIntervalVal = val;
+    input.value    = val;
+}
+
+// ✅ Новый toggleDay — читает data-day атрибут
+function toggleDay(btn) {
+    btn.classList.toggle('active');
+}
+
+function toggleAllDays(btn) {
+    const dayBtns   = document.querySelectorAll('.day-pill');
+    const allActive = [...dayBtns].every(b => b.classList.contains('active'));
+    dayBtns.forEach(b => {
+        if (allActive) b.classList.remove('active');
+        else b.classList.add('active');
+    });
+    btn.textContent = allActive ? 'Выбрать все' : 'Снять все';
+}
+
+// ===========================================
+// ===== МОДАЛЬНОЕ ОКНО =====
+// ===========================================
 
 function openModal() {
     const now       = new Date();
@@ -357,7 +406,11 @@ function openModal() {
     document.getElementById('dayModeInterval').classList.remove('active');
     document.getElementById('weekdayPicker').style.display     = 'block';
     document.getElementById('intervalDayPicker').style.display = 'none';
-    document.getElementById('dayIntervalValue').textContent    = '2';
+    document.getElementById('dayIntervalValue').value          = '2';
+
+    // Сброс кнопки "выбрать все"
+    const allBtn = document.querySelector('.days-all-btn');
+    if (allBtn) allBtn.textContent = 'Выбрать все';
 
     document.getElementById('reminderToggle').classList.remove('on');
     document.getElementById('toggleLabel').textContent        = 'нет';
@@ -376,7 +429,8 @@ function openModal() {
     document.getElementById('allDayLabel').textContent         = 'нет';
     document.getElementById('intervalTimeRange').style.display = 'block';
 
-    document.querySelectorAll('.day-btn:not(.day-btn-all)').forEach(b => b.classList.remove('active'));
+    // Сброс дней недели — новые .day-pill
+    document.querySelectorAll('.day-pill').forEach(b => b.classList.remove('active'));
 
     iconPickerOpen = false;
     document.getElementById('iconPicker').classList.remove('open');
@@ -435,19 +489,6 @@ function updateDateDisplay() {
     document.getElementById('startYear').textContent  = dateState.year;
 }
 
-function toggleDay(btn) {
-    btn.classList.toggle('active');
-}
-
-function toggleAllDays(btn) {
-    const dayBtns   = document.querySelectorAll('.day-btn:not(.day-btn-all)');
-    const allActive = [...dayBtns].every(b => b.classList.contains('active'));
-    dayBtns.forEach(b => {
-        if (allActive) b.classList.remove('active');
-        else b.classList.add('active');
-    });
-}
-
 function toggleReminder() {
     reminderOn = !reminderOn;
     document.getElementById('reminderToggle').classList.toggle('on', reminderOn);
@@ -474,6 +515,10 @@ function toggleAllDay() {
     document.getElementById('intervalTimeRange').style.display = allDayReminder ? 'none' : 'block';
 }
 
+// ===========================================
+// ===== СОХРАНЕНИЕ ПРИВЫЧКИ =====
+// ===========================================
+
 function saveHabit() {
     const nameInput = document.getElementById('habitName');
     const name      = nameInput.value.trim();
@@ -493,19 +538,22 @@ function saveHabit() {
     const startDay   = String(dateState.day).padStart(2, '0');
     const startDate  = `${dateState.year}-${startMonth}-${startDay}`;
 
-    // ✅ Дни — зависит от режима
-    let activeDays   = [];
-    let habitDayMode = dayMode;
+    // ✅ Дни — читаем из новых .day-pill
+    let activeDays       = [];
+    let habitDayMode     = dayMode;
     let habitDayInterval = null;
 
     if (dayMode === 'weekday') {
-        activeDays = [...document.querySelectorAll('.day-btn:not(.day-btn-all).active')]
-            .map(b => b.textContent);
+        activeDays = [...document.querySelectorAll('.day-pill.active')]
+            .map(b => b.getAttribute('data-day'));
     } else {
-        habitDayInterval = dayIntervalVal;
+        // Финальная валидация перед сохранением
+        const inputVal = parseInt(document.getElementById('dayIntervalValue').value) || 2;
+        habitDayInterval = Math.max(2, Math.min(365, inputVal));
+        dayIntervalVal   = habitDayInterval;
     }
 
-    // ✅ Напоминания — синхронизированы с днями
+    // ✅ Напоминания
     let habitReminder         = false;
     let habitReminderTime     = null;
     let habitReminderType     = null;
@@ -548,7 +596,6 @@ function saveHabit() {
         reminderAllDay:   habitReminderAllDay,
         reminderStart:    habitReminderStart,
         reminderEnd:      habitReminderEnd,
-        // ✅ days используется только в режиме weekday
         days:             activeDays,
         startDate
     };
@@ -559,6 +606,10 @@ function saveHabit() {
     renderHabits();
     syncWithServer();
 }
+
+// ===========================================
+// ===== ПРОФИЛЬ =====
+// ===========================================
 
 function renderProfile() {
     const guestEl  = document.getElementById('profileGuest');
@@ -642,7 +693,6 @@ function renderNotificationSettings() {
             reminderInfo = `⏰ ${h.reminderTime}`;
         }
 
-        // ✅ Показываем информацию о днях
         let daysInfo = '';
         if (h.dayMode === 'interval') {
             daysInfo = `каждые ${h.dayInterval} дн.`;
@@ -663,6 +713,10 @@ function renderNotificationSettings() {
         </div>`;
     }).join('');
 }
+
+// ===========================================
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+// ===========================================
 
 document.addEventListener('DOMContentLoaded', function() {
     initTelegram();
