@@ -1,18 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --primary:        #6C63FF;
-    --primary-light:  #EEEEFF;
-    --primary-dark:   #5A52D5;
-    --accent:         #FF6584;
-    --success:        #43C98E;
-    --bg:             #F5F4FF;
-    --card:           #FFFFFF;
-    --text:           #1A1A2E;
-    --text-muted:     #8A8FA8;
-    --border:         #E4E6F0;
-    --shadow:         0 4px 20px rgba(108,99,255,0.12);
-    --shadow-sm:      0 2px 8px rgba(108,99,255,0.08);
+    --primary:       #6C63FF;
+    --primary-light: #EEEEFF;
+    --primary-dark:  #5A52D5;
+    --accent:        #FF6584;
+    --success:       #43C98E;
+    --bg:            #F5F4FF;
+    --card:          #FFFFFF;
+    --text:          #1A1A2E;
+    --text-muted:    #8A8FA8;
+    --border:        #E4E6F0;
+    --shadow:        0 4px 20px rgba(108,99,255,0.12);
+    --shadow-sm:     0 2px 8px rgba(108,99,255,0.08);
 }
 
 * {
@@ -31,7 +31,6 @@ body {
     touch-action: pan-x pan-y;
 }
 
-/* ===== ШАПКА ===== */
 .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -55,12 +54,10 @@ body {
     letter-spacing: -0.3px;
 }
 
-/* ===== СТРАНИЦЫ ===== */
 .page { display: none; }
 .page.active { display: block; }
 .content { padding: 16px; }
 
-/* ===== ДАТА НА ГЛАВНОЙ ===== */
 .date-nav-bar {
     display: flex;
     align-items: center;
@@ -102,7 +99,6 @@ body {
     flex: 1;
 }
 
-/* ===== КНОПКА ДОБАВИТЬ ===== */
 .add-habit-btn {
     width: 100%;
     padding: 15px 18px;
@@ -118,14 +114,12 @@ body {
     margin-bottom: 16px;
     box-shadow: 0 4px 18px rgba(108,99,255,0.38);
     transition: opacity 0.2s, transform 0.15s;
-    letter-spacing: 0.2px;
 }
 .add-habit-btn:active {
     opacity: 0.85;
     transform: scale(0.98);
 }
 
-/* ===== КАРТОЧКА ПРИВЫЧКИ ===== */
 .habit-card {
     background: var(--card);
     border: 1.5px solid var(--border);
@@ -214,7 +208,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     box-shadow: 0 3px 10px rgba(108,99,255,0.4);
     transition: transform 0.15s, box-shadow 0.15s;
 }
@@ -234,7 +227,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     transition: all 0.15s;
 }
 .delete-btn:active {
@@ -243,7 +235,6 @@ body {
     color: var(--accent);
 }
 
-/* ===== ПУСТОЙ СПИСОК ===== */
 .empty-msg {
     display: flex;
     flex-direction: column;
@@ -257,7 +248,6 @@ body {
 }
 .empty-icon { font-size: 52px; }
 
-/* ===== НАВИГАЦИЯ ===== */
 .bottom-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -292,7 +282,6 @@ body {
     font-weight: 700;
 }
 
-/* ===== ПРОФИЛЬ ===== */
 .profile-box {
     display: flex;
     flex-direction: column;
@@ -420,7 +409,6 @@ body {
     color: var(--accent);
 }
 
-/* ===== УВЕДОМЛЕНИЯ В ПРОФИЛЕ ===== */
 .notifications-block {
     width: 100%;
     background: var(--card);
@@ -436,7 +424,6 @@ body {
     margin-bottom: 10px;
 }
 
-/* ===== ПОМОЩЬ ===== */
 .help-box { display: flex; flex-direction: column; }
 .help-title {
     font-size: 20px;
@@ -479,7 +466,6 @@ body {
     font-weight: 600;
 }
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -490,13 +476,11 @@ body {
     justify-content: center;
     backdrop-filter: blur(3px);
 }
-.modal-overlay.active {
-    display: flex;
-}
+.modal-overlay.active { display: flex; }
 .modal {
     background: var(--card);
     border-radius: 28px 28px 0 0;
-    padding: 24px 18px 32px;
+    padding: 24px 16px 32px;
     width: 100%;
     max-height: 92vh;
     overflow-y: auto;
@@ -514,7 +498,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* ===== ИКОНКА + НАЗВАНИЕ ===== */
 .modal-top-row {
     display: flex;
     align-items: center;
@@ -549,10 +532,10 @@ body {
     background: var(--bg);
     outline: none;
     transition: border-color 0.2s;
+    min-width: 0;
 }
 .habit-name-input:focus { border-color: var(--primary); }
 
-/* ===== ПИКЕР ИКОНОК ===== */
 .icon-picker {
     display: none;
     background: var(--bg);
@@ -585,7 +568,6 @@ body {
     transform: scale(0.88);
 }
 
-/* ===== БЛОК НАСТРОЕК ===== */
 .settings-box {
     background: var(--bg);
     border: 1.5px solid var(--border);
@@ -598,7 +580,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 13px 0;
-    gap: 10px;
+    gap: 8px;
 }
 .setting-label {
     font-size: 14px;
@@ -647,23 +629,20 @@ body {
     color: var(--text);
     background: var(--card);
     outline: none;
-    cursor: pointer;
 }
 
-/* ===== ДАТА НАЧАЛА ===== */
 .date-inputs {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     align-items: center;
 }
 .custom-select-wrap {
     display: flex;
     align-items: center;
-    gap: 4px;
     background: var(--card);
     border: 1.5px solid var(--border);
     border-radius: 10px;
-    padding: 4px 6px;
+    padding: 3px 4px;
 }
 .date-arrow {
     background: none;
@@ -672,17 +651,17 @@ body {
     font-weight: 700;
     color: var(--primary);
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 3px;
     line-height: 1;
     touch-action: manipulation;
     transition: transform 0.12s;
 }
 .date-arrow:active { transform: scale(0.8); }
 .date-value {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--text);
-    min-width: 28px;
+    min-width: 22px;
     text-align: center;
 }
 
@@ -690,9 +669,10 @@ body {
 .day-mode-toggle {
     display: flex;
     gap: 6px;
+    flex-shrink: 0;
 }
 .day-mode-btn {
-    padding: 7px 12px;
+    padding: 7px 10px;
     font-size: 12px;
     font-weight: 600;
     font-family: 'Inter', Arial, sans-serif;
@@ -704,73 +684,101 @@ body {
     transition: all 0.15s;
     white-space: nowrap;
     touch-action: manipulation;
+    line-height: 1;
 }
 .day-mode-btn.active {
     background: var(--primary);
     border-color: var(--primary);
     color: #fff;
-    box-shadow:
-/* ===== ДНИ НЕДЕЛИ ===== */
-.days-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding-bottom: 4px;
+    box-shadow: 0 2px 8px rgba(108,99,255,0.3);
 }
-.day-btn {
-    flex: 1;
-    min-width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    border: 1.5px solid var(--border);
+
+/* ===== ДНИ НЕДЕЛИ ===== */
+.weekday-picker-block {
+    padding: 6px 0 14px;
+}
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.day-circle {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px solid var(--border);
     background: var(--card);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     font-family: 'Inter', Arial, sans-serif;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+    transition: all 0.18s;
+    padding: 0;
+    width: 100%;
+    line-height: 1;
 }
-.day-btn.active {
+.day-circle.active {
     background: var(--primary);
     border-color: var(--primary);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(108,99,255,0.3);
+    box-shadow: 0 3px 10px rgba(108,99,255,0.35);
+    transform: scale(1.08);
 }
-.day-btn-all {
+.day-circle:active {
+    transform: scale(0.9);
+}
+.select-all-btn {
+    width: 100%;
+    padding: 9px 0;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', Arial, sans-serif;
     background: var(--primary-light);
-    border-color: var(--primary);
+    border: 1.5px solid var(--primary);
+    border-radius: 12px;
     color: var(--primary);
+    cursor: pointer;
+    transition: all 0.15s;
+    touch-action: manipulation;
 }
-.day-btn-all.active {
+.select-all-btn:active {
     background: var(--primary);
     color: #fff;
 }
 
-/* ===== ✅ ИНТЕРВАЛ ДНЕЙ (через N дней) ===== */
-.interval-day-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 0 8px;
-    gap: 10px;
+/* ===== ИНТЕРВАЛ ДНЕЙ ===== */
+.interval-picker-block {
+    padding: 6px 0 14px;
 }
-.interval-day-counter {
+.interval-picker-inner {
     display: flex;
     align-items: center;
-    gap: 0;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.interval-picker-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    flex-shrink: 0;
+}
+.interval-stepper {
+    display: flex;
+    align-items: center;
     background: var(--card);
     border: 1.5px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
     flex-shrink: 0;
 }
-.interval-day-btn {
-    width: 42px;
+.stepper-btn {
+    width: 40px;
     height: 42px;
     border: none;
     background: var(--primary-light);
@@ -783,44 +791,44 @@ body {
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
-    transition: background 0.15s, transform 0.12s;
+    transition: background 0.15s, color 0.15s;
     flex-shrink: 0;
+    line-height: 1;
 }
-.interval-day-btn:active {
+.stepper-btn:active {
     background: var(--primary);
     color: #fff;
-    transform: scale(0.9);
 }
-.interval-day-value {
-    min-width: 44px;
-    text-align: center;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text);
-    padding: 0 4px;
-    background: var(--card);
+.stepper-input {
+    width: 52px;
     height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none;
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
+    background: var(--card);
+    font-size: 17px;
+    font-weight: 700;
+    font-family: 'Inter', Arial, sans-serif;
+    color: var(--text);
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
 }
-.interval-day-unit {
-    font-size: 13px;
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.interval-picker-unit {
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-muted);
-    padding: 0 12px 0 8px;
-    background: var(--card);
-    height: 42px;
-    display: flex;
-    align-items: center;
+    flex-shrink: 0;
 }
-.interval-day-hint {
+.interval-picker-hint {
     font-size: 12px;
     color: var(--text-muted);
     text-align: center;
-    padding-bottom: 4px;
     font-weight: 400;
 }
 
@@ -861,13 +869,13 @@ body {
 }
 .toggle.on .toggle-thumb { left: 23px; }
 
-/* ===== ПЕРЕКЛЮЧАТЕЛЬ ТИПА НАПОМИНАНИЯ ===== */
+/* ===== ТИП НАПОМИНАНИЯ ===== */
 .reminder-type-toggle {
     display: flex;
     gap: 6px;
 }
 .type-btn {
-    padding: 7px 11px;
+    padding: 7px 10px;
     font-size: 12px;
     font-weight: 600;
     font-family: 'Inter', Arial, sans-serif;
@@ -879,6 +887,7 @@ body {
     transition: all 0.15s;
     white-space: nowrap;
     touch-action: manipulation;
+    line-height: 1;
 }
 .type-btn.active {
     background: var(--primary);
@@ -895,7 +904,7 @@ body {
 }
 .btn-cancel {
     flex: 1;
-    padding: 14px;
+    padding: 15px;
     font-size: 15px;
     font-weight: 600;
     font-family: 'Inter', Arial, sans-serif;
@@ -913,7 +922,7 @@ body {
 }
 .btn-save {
     flex: 2;
-    padding: 14px;
+    padding: 15px;
     font-size: 15px;
     font-weight: 700;
     font-family: 'Inter', Arial, sans-serif;
