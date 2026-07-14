@@ -687,15 +687,29 @@ body {
 }
 
 /* ===== ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА ДНЕЙ ===== */
-.day-mode-toggle-wrap {
+.day-mode-toggle {
     display: flex;
-    gap: 8px;
-    padding: 0 0 12px 0;
+    gap: 6px;
 }
-.day-mode-toggle-wrap .type-btn {
-    flex: 1;
+.day-mode-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', Arial, sans-serif;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    touch-action: manipulation;
 }
-
+.day-mode-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow:
 /* ===== ДНИ НЕДЕЛИ ===== */
 .days-row {
     display: flex;
