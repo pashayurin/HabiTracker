@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -101,7 +101,7 @@
             <span class="help-icon">🔔</span>
             <div>
                 <p class="help-q">Как включить напоминания?</p>
-                <p class="help-a">При добавлении привычки включите тумблер «напоминания» и выберите тип: в конкретное время или каждые N часов</p>
+                <p class="help-a">При добавлении привычки включите тумблер «напоминания» и выберите тип</p>
             </div>
         </div>
         <div class="help-item">
@@ -195,44 +195,63 @@
             </div>
             <div class="divider"></div>
 
-            <!-- ✅ НОВАЯ СЕКЦИЯ: по каким дням недели -->
-            <div class="setting-row setting-row-wrap">
+            <!-- по каким дням -->
+            <div class="setting-row">
                 <span class="setting-label">по каким дням</span>
-                <!-- Переключатель режима -->
                 <div class="day-mode-toggle">
-                    <button class="type-btn active" id="dayModeWeekday" onclick="setDayMode('weekday')">📅 дни недели</button>
-                    <button class="type-btn" id="dayModeInterval" onclick="setDayMode('interval')">🔁 через N дней</button>
+                    <button class="day-mode-btn active" id="dayModeWeekday" onclick="setDayMode('weekday')">📅 дни недели</button>
+                    <button class="day-mode-btn" id="dayModeInterval" onclick="setDayMode('interval')">🔁 интервал</button>
                 </div>
             </div>
 
-            <!-- Режим: конкретные дни недели -->
-            <div id="weekdayPicker">
-                <div class="days-row">
-                    <button class="day-btn" onclick="toggleDay(this)">ПН</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ВТ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">СР</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ЧТ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ПТ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">СБ</button>
-                    <button class="day-btn" onclick="toggleDay(this)">ВС</button>
-                    <button class="day-btn day-btn-all" onclick="toggleAllDays(this)">ВСЕ</button>
+            <!-- ✅ Режим: конкретные дни недели — новый стиль -->
+            <div id="weekdayPicker" class="weekday-picker-wrap">
+                <div class="days-grid">
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="ПН">
+                        <span class="day-pill-short">Пн</span>
+                    </button>
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="ВТ">
+                        <span class="day-pill-short">Вт</span>
+                    </button>
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="СР">
+                        <span class="day-pill-short">Ср</span>
+                    </button>
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="ЧТ">
+                        <span class="day-pill-short">Чт</span>
+                    </button>
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="ПТ">
+                        <span class="day-pill-short">Пт</span>
+                    </button>
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="СБ">
+                        <span class="day-pill-short">Сб</span>
+                    </button>
+                    <button class="day-pill" onclick="toggleDay(this)" data-day="ВС">
+                        <span class="day-pill-short">Вс</span>
+                    </button>
                 </div>
+                <button class="days-all-btn" onclick="toggleAllDays(this)">Выбрать все</button>
             </div>
 
-            <!-- Режим: через N дней -->
-            <div id="intervalDayPicker" style="display:none;">
-                <div class="setting-row">
-                    <span class="setting-label">повторять каждые</span>
-                    <div class="interval-day-wrap">
-                        <button class="date-arrow" onclick="changeDayInterval(-1)">‹</button>
-                        <span class="date-value" id="dayIntervalValue">2</span>
-                        <button class="date-arrow" onclick="changeDayInterval(1)">›</button>
-                        <span class="setting-label" style="margin-left:4px;">дн.</span>
+            <!-- ✅ Режим: через N дней — с полем ввода -->
+            <div id="intervalDayPicker" class="interval-picker-wrap" style="display:none;">
+                <div class="interval-picker-row">
+                    <span class="interval-picker-label">повторять каждые</span>
+                    <div class="interval-counter">
+                        <button class="interval-counter-btn" onclick="changeDayInterval(-1)">−</button>
+                        <input
+                            type="number"
+                            class="interval-counter-input"
+                            id="dayIntervalValue"
+                            value="2"
+                            min="2"
+                            max="365"
+                            oninput="syncDayIntervalInput(this)"
+                        >
+                        <button class="interval-counter-btn" onclick="changeDayInterval(1)">+</button>
+                        <span class="interval-counter-unit">дн.</span>
                     </div>
                 </div>
-                <div style="font-size:11px;color:var(--text-muted);padding:0 0 10px 0;text-align:center;">
-                    начиная с даты начала
-                </div>
+                <p class="interval-picker-hint">начиная с выбранной даты начала</p>
             </div>
 
             <div class="divider"></div>
@@ -317,6 +336,6 @@
     </div>
 </div>
 
-<script src="script.js?v=12"></script>
+<script src="script.js?v=14"></script>
 </body>
 </html>
