@@ -70,8 +70,6 @@ const dateState = {
     year:  new Date().getFullYear()
 };
 
-// ===========================================
-
 function getUserTimezone() {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow';
@@ -139,8 +137,6 @@ function logout() {
     renderProfile();
 }
 
-// ===========================================
-
 async function syncWithServer() {
     if (!currentUser || !currentUser.id) return;
     try {
@@ -196,8 +192,6 @@ async function loadFromServer() {
     }
 }
 
-// ===========================================
-
 function dateKey(d) {
     const y   = d.getFullYear();
     const m   = String(d.getMonth() + 1).padStart(2, '0');
@@ -238,8 +232,6 @@ function showPage(name, el) {
     if (name === 'profile') renderProfile();
 }
 
-// ===========================================
-
 function isHabitActiveOnDate(habit, date) {
     if (habit.dayMode === 'interval' && habit.dayInterval) {
         const start = habit.startDate ? new Date(habit.startDate) : new Date();
@@ -258,11 +250,9 @@ function isHabitActiveOnDate(habit, date) {
 function renderHabits() {
     const list = document.getElementById('habitsList');
     if (!list) return;
-
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
     const filtered      = habits.filter(h => isHabitActiveOnDate(h, currentDate));
-
     if (filtered.length === 0) {
         list.innerHTML = `
             <div class="empty-msg">
@@ -272,7 +262,6 @@ function renderHabits() {
             </div>`;
         return;
     }
-
     list.innerHTML = filtered.map(h => {
         const done      = todayProgress[h.id] || 0;
         const total     = h.count || 1;
@@ -319,10 +308,6 @@ function deleteHabit(id) {
     syncWithServer();
 }
 
-// ===========================================
-// ===== РЕЖИМ ДНЕЙ =====
-// ===========================================
-
 function setDayMode(mode) {
     dayMode = mode;
     document.getElementById('dayModeWeekday').classList.toggle('active', mode === 'weekday');
@@ -331,7 +316,6 @@ function setDayMode(mode) {
     document.getElementById('intervalDayPicker').style.display = mode === 'interval' ? 'block' : 'none';
 }
 
-// ✅ Кнопки − и + меняют значение
 function changeDayInterval(dir) {
     const input = document.getElementById('dayIntervalValue');
     let val = parseInt(input.value) || 2;
@@ -340,31 +324,27 @@ function changeDayInterval(dir) {
     input.value = val;
 }
 
-// ✅ Ввод вручную — валидация
 function syncDayIntervalInput(input) {
     let val = parseInt(input.value);
-    if (isNaN(val) || val < 2)   val = 2;
-    if (val > 365) val = 365;
-    dayIntervalVal = val;
-    // Не перезаписываем input.value прямо здесь — только при blur
+    if (!isNaN(val)) {
+        dayIntervalVal = Math.max(2, Math.min(365, val));
+    }
 }
 
-// ✅ При потере фокуса — финальная валидация
 function fixDayIntervalInput(input) {
     let val = parseInt(input.value);
-    if (isNaN(val) || val < 2)   val = 2;
+    if (isNaN(val) || val < 2) val = 2;
     if (val > 365) val = 365;
     dayIntervalVal = val;
-    input.value    = val;
+    input.value = val;
 }
 
-// ✅ Новый toggleDay — читает data-day атрибут
 function toggleDay(btn) {
     btn.classList.toggle('active');
 }
 
 function toggleAllDays(btn) {
-    const dayBtns   = document.querySelectorAll('.day-pill');
+    const dayBtns   = document.querySelectorAll('.day-circle');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
     dayBtns.forEach(b => {
         if (allActive) b.classList.remove('active');
@@ -372,10 +352,6 @@ function toggleAllDays(btn) {
     });
     btn.textContent = allActive ? 'Выбрать все' : 'Снять все';
 }
-
-// ===========================================
-// ===== МОДАЛЬНОЕ ОКНО =====
-// ===========================================
 
 function openModal() {
     const now       = new Date();
@@ -399,17 +375,16 @@ function openModal() {
     reminderEnd      = '22:00';
     allDayReminder   = false;
 
-    // Сброс режима дней
     dayMode        = 'weekday';
     dayIntervalVal = 2;
+
     document.getElementById('dayModeWeekday').classList.add('active');
     document.getElementById('dayModeInterval').classList.remove('active');
     document.getElementById('weekdayPicker').style.display     = 'block';
     document.getElementById('intervalDayPicker').style.display = 'none';
     document.getElementById('dayIntervalValue').value          = '2';
 
-    // Сброс кнопки "выбрать все"
-    const allBtn = document.querySelector('.days-all-btn');
+    const allBtn = document.querySelector('.select-all-btn');
     if (allBtn) allBtn.textContent = 'Выбрать все';
 
     document.getElementById('reminderToggle').classList.remove('on');
@@ -429,8 +404,7 @@ function openModal() {
     document.getElementById('allDayLabel').textContent         = 'нет';
     document.getElementById('intervalTimeRange').style.display = 'block';
 
-    // Сброс дней недели — новые .day-pill
-    document.querySelectorAll('.day-pill').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
 
     iconPickerOpen = false;
     document.getElementById('iconPicker').classList.remove('open');
@@ -515,10 +489,6 @@ function toggleAllDay() {
     document.getElementById('intervalTimeRange').style.display = allDayReminder ? 'none' : 'block';
 }
 
-// ===========================================
-// ===== СОХРАНЕНИЕ ПРИВЫЧКИ =====
-// ===========================================
-
 function saveHabit() {
     const nameInput = document.getElementById('habitName');
     const name      = nameInput.value.trim();
@@ -538,22 +508,19 @@ function saveHabit() {
     const startDay   = String(dateState.day).padStart(2, '0');
     const startDate  = `${dateState.year}-${startMonth}-${startDay}`;
 
-    // ✅ Дни — читаем из новых .day-pill
     let activeDays       = [];
     let habitDayMode     = dayMode;
     let habitDayInterval = null;
 
     if (dayMode === 'weekday') {
-        activeDays = [...document.querySelectorAll('.day-pill.active')]
+        activeDays = [...document.querySelectorAll('.day-circle.active')]
             .map(b => b.getAttribute('data-day'));
     } else {
-        // Финальная валидация перед сохранением
-        const inputVal = parseInt(document.getElementById('dayIntervalValue').value) || 2;
+        const inputVal   = parseInt(document.getElementById('dayIntervalValue').value) || 2;
         habitDayInterval = Math.max(2, Math.min(365, inputVal));
         dayIntervalVal   = habitDayInterval;
     }
 
-    // ✅ Напоминания
     let habitReminder         = false;
     let habitReminderTime     = null;
     let habitReminderType     = null;
@@ -565,7 +532,6 @@ function saveHabit() {
     if (reminderOn) {
         habitReminder     = true;
         habitReminderType = reminderType;
-
         if (reminderType === 'time') {
             habitReminderTime = document.getElementById('reminderTimeInput').value;
         } else {
@@ -606,10 +572,6 @@ function saveHabit() {
     renderHabits();
     syncWithServer();
 }
-
-// ===========================================
-// ===== ПРОФИЛЬ =====
-// ===========================================
 
 function renderProfile() {
     const guestEl  = document.getElementById('profileGuest');
@@ -703,8 +665,14 @@ function renderNotificationSettings() {
         }
 
         return `
-        <div style="display:flex;align-items:center;justify-content:space-between;
-                    padding:8px 0;border-bottom:1px solid var(--border);gap:8px;">
+        <div style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:8px 0;
+            border-bottom:1px solid var(--border);
+            gap:8px;
+        ">
             <span style="font-size:13px;">${h.icon} ${h.name}</span>
             <div style="text-align:right;">
                 <div style="color:var(--primary);font-weight:600;font-size:12px;">${reminderInfo}</div>
@@ -713,10 +681,6 @@ function renderNotificationSettings() {
         </div>`;
     }).join('');
 }
-
-// ===========================================
-// ===== ИНИЦИАЛИЗАЦИЯ =====
-// ===========================================
 
 document.addEventListener('DOMContentLoaded', function() {
     initTelegram();
