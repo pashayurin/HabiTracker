@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -40,11 +40,9 @@
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername"></p>
-
             <div style="font-size:12px;color:var(--text-muted);text-align:center;margin:4px 0 12px;">
                 🌍 <span id="timezoneLabel">определяется...</span>
             </div>
-
             <div class="profile-stats">
                 <div class="stat-box">
                     <span class="stat-num" id="statTotal">0</span>
@@ -55,12 +53,10 @@
                     <span class="stat-label">выполнено сегодня</span>
                 </div>
             </div>
-
             <div class="notifications-block">
                 <div class="notifications-title">🔔 Напоминания</div>
                 <div id="notificationSettings"></div>
             </div>
-
             <button class="btn-logout" onclick="logout()">Выйти</button>
         </div>
     </div>
@@ -141,6 +137,7 @@
 
         <h2 class="modal-title">Добавить привычку</h2>
 
+        <!-- Иконка + Название -->
         <div class="modal-top-row">
             <div class="icon-circle" id="iconCircle" onclick="toggleIconPicker(event)">
                 <span id="selectedIcon">⭐</span>
@@ -148,24 +145,27 @@
             <input type="text" class="habit-name-input" placeholder="название привычки" id="habitName">
         </div>
 
+        <!-- Пикер иконок -->
         <div class="icon-picker" id="iconPicker">
             <div class="icon-picker-grid" id="iconGrid"></div>
         </div>
 
         <div class="settings-box">
 
+            <!-- Количество -->
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
                 <input type="number" class="setting-input-num" id="habitCount" placeholder="1" min="1">
             </div>
             <div class="divider"></div>
 
+            <!-- Единица -->
             <div class="setting-row">
                 <span class="setting-label">единица измерения</span>
                 <select class="setting-select" id="habitUnit">
                     <option value="мин">МИН</option>
                     <option value="час">ЧАС</option>
-                    <option value="раз">РАЗ</option>
+                    <option value="раз" selected>РАЗ</option>
                     <option value="шт">ШТ</option>
                     <option value="стр">СТР</option>
                     <option value="км">КМ</option>
@@ -173,7 +173,8 @@
             </div>
             <div class="divider"></div>
 
-            <div class="setting-row date-row">
+            <!-- Дата начала -->
+            <div class="setting-row">
                 <span class="setting-label">дата начала</span>
                 <div class="date-inputs">
                     <div class="custom-select-wrap">
@@ -195,7 +196,7 @@
             </div>
             <div class="divider"></div>
 
-            <!-- по каким дням -->
+            <!-- По каким дням — переключатель -->
             <div class="setting-row">
                 <span class="setting-label">по каким дням</span>
                 <div class="day-mode-toggle">
@@ -204,51 +205,41 @@
                 </div>
             </div>
 
-            <!-- ✅ Режим: конкретные дни недели — новый стиль -->
-            <div id="weekdayPicker" class="weekday-picker-wrap">
+            <!-- Режим: дни недели -->
+            <div id="weekdayPicker" class="weekday-picker-block">
                 <div class="days-grid">
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="ПН">
-                        <span class="day-pill-short">Пн</span>
-                    </button>
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="ВТ">
-                        <span class="day-pill-short">Вт</span>
-                    </button>
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="СР">
-                        <span class="day-pill-short">Ср</span>
-                    </button>
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="ЧТ">
-                        <span class="day-pill-short">Чт</span>
-                    </button>
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="ПТ">
-                        <span class="day-pill-short">Пт</span>
-                    </button>
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="СБ">
-                        <span class="day-pill-short">Сб</span>
-                    </button>
-                    <button class="day-pill" onclick="toggleDay(this)" data-day="ВС">
-                        <span class="day-pill-short">Вс</span>
-                    </button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="ПН">Пн</button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="ВТ">Вт</button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="СР">Ср</button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="ЧТ">Чт</button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="ПТ">Пт</button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="СБ">Сб</button>
+                    <button class="day-circle" onclick="toggleDay(this)" data-day="ВС">Вс</button>
                 </div>
-                <button class="days-all-btn" onclick="toggleAllDays(this)">Выбрать все</button>
+                <button class="select-all-btn" onclick="toggleAllDays(this)">Выбрать все</button>
             </div>
 
-            <!-- ✅ Режим: через N дней — с полем ввода -->
-            <div id="intervalDayPicker" class="interval-picker-wrap" style="display:none;">
-                <div class="interval-picker-row">
-                    <span class="interval-picker-label">повторять каждые</span>
-                    <div class="interval-counter">
-                        <button class="interval-counter-btn" onclick="changeDayInterval(-1)">−</button>
-                        <input
-                            type="number"
-                            class="interval-counter-input"
-                            id="dayIntervalValue"
-                            value="2"
-                            min="2"
-                            max="365"
-                            oninput="syncDayIntervalInput(this)"
-                        >
-                        <button class="interval-counter-btn" onclick="changeDayInterval(1)">+</button>
-                        <span class="interval-counter-unit">дн.</span>
+            <!-- Режим: интервал -->
+            <div id="intervalDayPicker" class="interval-picker-block" style="display:none;">
+                <div class="setting-row" style="padding-top:0;">
+                    <span class="setting-label">повторять каждые</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="custom-select-wrap">
+                            <button class="date-arrow" onclick="changeDayInterval(-1)">‹</button>
+                            <input
+                                type="number"
+                                class="date-value"
+                                id="dayIntervalValue"
+                                value="2"
+                                min="2"
+                                max="365"
+                                style="width:36px;border:none;background:transparent;text-align:center;font-size:13px;font-weight:700;font-family:inherit;color:var(--text);outline:none;"
+                                oninput="syncDayIntervalInput(this)"
+                                onblur="fixDayIntervalInput(this)"
+                            >
+                            <button class="date-arrow" onclick="changeDayInterval(1)">›</button>
+                        </div>
+                        <span style="font-size:14px;font-weight:600;color:var(--text-muted);">дн.</span>
                     </div>
                 </div>
                 <p class="interval-picker-hint">начиная с выбранной даты начала</p>
@@ -256,6 +247,7 @@
 
             <div class="divider"></div>
 
+            <!-- Напоминания -->
             <div class="setting-row">
                 <span class="setting-label">напоминания</span>
                 <div class="toggle-wrap">
@@ -267,9 +259,7 @@
             </div>
 
             <div id="reminderTimeWrap" style="display:none;">
-
                 <div class="divider"></div>
-
                 <div class="setting-row">
                     <span class="setting-label">тип</span>
                     <div class="reminder-type-toggle">
@@ -323,7 +313,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
         </div>
@@ -336,6 +325,6 @@
     </div>
 </div>
 
-<script src="script.js?v=14"></script>
+<script src="script.js?v=15"></script>
 </body>
 </html>
