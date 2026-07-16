@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=15">
+    <link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 
@@ -29,14 +29,12 @@
 <main class="content page" id="page-profile">
     <div class="profile-box">
         <div class="profile-avatar" id="profileAvatar">👤</div>
-
         <div id="profileGuest">
             <p class="profile-hint">Войдите через Telegram,<br>чтобы сохранять привычки</p>
             <button class="btn-tg-login" onclick="fakeTelegramLogin()">
                 <span>✈️</span> Войти через Telegram
             </button>
         </div>
-
         <div id="profileUser" style="display:none;">
             <p class="profile-name" id="profileName">—</p>
             <p class="profile-username" id="profileUsername"></p>
@@ -137,7 +135,6 @@
 
         <h2 class="modal-title">Добавить привычку</h2>
 
-        <!-- Иконка + Название -->
         <div class="modal-top-row">
             <div class="icon-circle" id="iconCircle" onclick="toggleIconPicker(event)">
                 <span id="selectedIcon">⭐</span>
@@ -145,21 +142,18 @@
             <input type="text" class="habit-name-input" placeholder="название привычки" id="habitName">
         </div>
 
-        <!-- Пикер иконок -->
         <div class="icon-picker" id="iconPicker">
             <div class="icon-picker-grid" id="iconGrid"></div>
         </div>
 
         <div class="settings-box">
 
-            <!-- Количество -->
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
                 <input type="number" class="setting-input-num" id="habitCount" placeholder="1" min="1">
             </div>
             <div class="divider"></div>
 
-            <!-- Единица -->
             <div class="setting-row">
                 <span class="setting-label">единица измерения</span>
                 <select class="setting-select" id="habitUnit">
@@ -173,7 +167,6 @@
             </div>
             <div class="divider"></div>
 
-            <!-- Дата начала -->
             <div class="setting-row">
                 <span class="setting-label">дата начала</span>
                 <div class="date-inputs">
@@ -196,12 +189,11 @@
             </div>
             <div class="divider"></div>
 
-            <!-- По каким дням — переключатель -->
             <div class="setting-row">
                 <span class="setting-label">по каким дням</span>
                 <div class="day-mode-toggle">
-                    <button class="day-mode-btn active" id="dayModeWeekday" onclick="setDayMode('weekday')">📅 дни недели</button>
-                    <button class="day-mode-btn" id="dayModeInterval" onclick="setDayMode('interval')">🔁 интервал</button>
+                    <button class="day-mode-btn active" id="dayModeWeekday" onclick="setDayMode('weekday')">📅 Дни</button>
+                    <button class="day-mode-btn" id="dayModeInterval" onclick="setDayMode('interval')">🔁 Интервал</button>
                 </div>
             </div>
 
@@ -233,7 +225,7 @@
                                 value="2"
                                 min="2"
                                 max="365"
-                                style="width:36px;border:none;background:transparent;text-align:center;font-size:13px;font-weight:700;font-family:inherit;color:var(--text);outline:none;"
+                                style="width:36px;border:none;background:transparent;text-align:center;font-size:13px;font-weight:700;font-family:inherit;color:var(--text);outline:none;-moz-appearance:textfield;"
                                 oninput="syncDayIntervalInput(this)"
                                 onblur="fixDayIntervalInput(this)"
                             >
@@ -325,6 +317,6 @@
     </div>
 </div>
 
-<script src="script.js?v=15"></script>
+<script src="script.js?v=16"></script>
 </body>
 </html>
