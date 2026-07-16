@@ -120,6 +120,10 @@
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Главная</span>
     </div>
+    <div class="nav-item" onclick="showPage('friends', this)">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Друзья</span>
+    </div>
     <div class="nav-item" onclick="showPage('profile', this)">
         <span class="nav-icon">👤</span>
         <span class="nav-label">Профиль</span>
@@ -318,5 +322,62 @@
 </div>
 
 <script src="script.js?v=16"></script>
+<!-- СТРАНИЦА ДРУЗЬЯ — вставить перед закрывающим </body> -->
+<main class="content page" id="page-friends">
+    <div class="friends-header">
+        <h2 class="friends-title">👥 Друзья</h2>
+        <p class="friends-subtitle">Соревнуйся с друзьями в привычках!</p>
+    </div>
+    <div class="friends-tabs">
+        <button class="friends-tab active" id="tabChallenges" onclick="switchFriendsTab('challenges', this)">🏆 Вызовы</button>
+        <button class="friends-tab" id="tabFriends" onclick="switchFriendsTab('friendsList', this)">👤 Друзья</button>
+    </div>
+    <div id="friendsTabChallenges">
+        <div id="challengesList"></div>
+        <button class="add-challenge-btn" onclick="openChallengeModal()">⚡ Создать вызов</button>
+    </div>
+    <div id="friendsTabFriendsList" style="display:none;">
+        <div class="add-friend-box">
+            <input type="text" class="friend-input" id="friendUsernameInput" placeholder="@username друга">
+            <button class="add-friend-btn" onclick="addFriend()">Добавить</button>
+        </div>
+        <div id="friendsListContainer"></div>
+    </div>
+</main>
+
+<!-- МОДАЛКА ВЫЗОВ -->
+<div class="modal-overlay" id="challengeModalOverlay" onclick="closeChallengeModalOutside(event)">
+    <div class="modal">
+        <h2 class="modal-title">⚡ Создать вызов</h2>
+        <div class="settings-box">
+            <div class="setting-row">
+                <span class="setting-label">привычка</span>
+                <select class="setting-select" id="challengeHabitSelect">
+                    <option value="">выберите...</option>
+                </select>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-row">
+                <span class="setting-label">друг</span>
+                <select class="setting-select" id="challengeFriendSelect">
+                    <option value="">выберите...</option>
+                </select>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-row">
+                <span class="setting-label">длительность</span>
+                <select class="setting-select" id="challengeDuration">
+                    <option value="7">7 дней</option>
+                    <option value="14">14 дней</option>
+                    <option value="30" selected>30 дней</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeChallengeModal()">Отмена</button>
+            <button class="btn-save" onclick="saveChallenge()">Создать вызов</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
