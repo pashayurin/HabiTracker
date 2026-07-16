@@ -47,7 +47,8 @@ const ICONS = [
 let habits      = lsGet('habits', '[]');
 let progress    = lsGet('progress', '{}');
 let currentUser = null;
-
+let friends    = lsGet('friends', '[]');
+let challenges = lsGet('challenges', '[]');
 let selectedIconValue = '⭐';
 let reminderOn        = false;
 let reminderTime      = '09:00';
@@ -230,6 +231,7 @@ function showPage(name, el) {
     document.getElementById('page-' + name).classList.add('active');
     el.classList.add('active');
     if (name === 'profile') renderProfile();
+    if (name === 'friends') renderFriendsPage();
 }
 
 function isHabitActiveOnDate(habit, date) {
@@ -698,3 +700,265 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5 * 60 * 1000);
     }, 300);
 });
+// =============================================
+// ===== ДРУЗЬЯ =====
+// =============================================
+
+function switchFriendsTab(tab, el) {
+    document.querySelectorAll('.friends-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('friendsTabChallenges').style.display  = tab === 'challenges'  ? 'block' : 'none';
+    document.getElementById('friendsTabFriendsList').style.display = tab === 'friendsList' ? 'block' : 'none';
+}
+
+function renderFriendsPage() {
+    renderChallenges();
+    renderFriendsList();
+}
+
+async function addFriend() {
+    const input    = document.getElementById('friendUsernameInput');
+    const username = input.value.trim().replace('@', '');
+    if (!username) return;
+    if (!currentUser || !currentUser.id) {
+        alert('Войдите через Telegram чтобы добавлять друзей');
+        return;
+    }
+    if (friends.find(f => f.username === username)) {
+        alert('Этот друг уже добавлен');
+        return;
+    }
+    try {
+        const res = await fetch(`${SERVER_URL}/api/friends/find?username=${encodeURIComponent(username)}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.found) {
+                friends.push({
+                    id:        data.telegramId,
+                    username:  data.username,
+                    firstName: data.firstName,
+                    addedAt:   new Date().toISOString()
+                });
+                lsSet('friends', friends);
+                input.value = '';
+                renderFriendsList();
+                await fetch(`${SERVER_URL}/api/friends/add`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ userId: currentUser.id, friendId: data.telegramId })
+                });
+            } else {
+                alert('Пользователь не найден. Попросите друга открыть HabiTracker через бота');
+            }
+        } else {
+            alert('Ошибка поиска. Попробуйте позже');
+        }
+    } catch(e) {
+        alert('Нет соединения с сервером');
+    }
+}
+
+function removeFriend(friendId) {
+    friends = friends.filter(f => f.id !== friendId);
+    lsSet('friends', friends);
+    renderFriendsList();
+}
+
+function renderFriendsList() {
+    const container = document.getElementById('friendsListContainer');
+    if (!container) return;
+    if (friends.length === 0) {
+        container.innerHTML = `
+            <div class="friends-empty">
+                <span class="empty-icon">👥</span>
+                <span>Нет друзей</span>
+                <span style="font-size:12px;margin-top:4px;">Введите @username друга выше</span>
+            </div>`;
+        return;
+    }
+    container.innerHTML = friends.map(f => `
+        <div class="friend-card">
+            <div class="friend-avatar">${(f.firstName || f.username || '?')[0].toUpperCase()}</div>
+            <div class="friend-info">
+                <div class="friend-name">${f.firstName || f.username}</div>
+                <div class="friend-username">@${f.username}</div>
+            </div>
+            <button class="friend-remove-btn" onclick="removeFriend(${f.id})">×</button>
+        </div>
+    `).join('');
+}
+
+function openChallengeModal() {
+    if (!currentUser || !currentUser.id) {
+        alert('Войдите через Telegram чтобы создавать вызовы');
+        return;
+    }
+    if (habits.length === 0) {
+        alert('Сначала добавьте хотя бы одну привычку');
+        return;
+    }
+    if (friends.length === 0) {
+        alert('Сначала добавьте друга во вкладке "Друзья"');
+        return;
+    }
+    const habitSel = document.getElementById('challengeHabitSelect');
+    habitSel.innerHTML = '<option value="">выберите...</option>' +
+        habits.map(h => `<option value="${h.id}">${h.icon} ${h.name}</option>`).join('');
+
+    const friendSel = document.getElementById('challengeFriendSelect');
+    friendSel.innerHTML = '<option value="">выберите...</option>' +
+        friends.map(f => `<option value="${f.id}">@${f.username}</option>`).join('');
+
+    document.getElementById('challengeModalOverlay').classList.add('active');
+}
+
+function closeChallengeModal() {
+    document.getElementById('challengeModalOverlay').classList.remove('active');
+}
+
+function closeChallengeModalOutside(e) {
+    if (e.target === document.getElementById('challengeModalOverlay')) closeChallengeModal();
+}
+
+async function saveChallenge() {
+    const habitId   = document.getElementById('challengeHabitSelect').value;
+    const friendId  = document.getElementById('challengeFriendSelect').value;
+    const duration  = parseInt(document.getElementById('challengeDuration').value);
+
+    if (!habitId || !friendId) {
+        alert('Выберите привычку и друга');
+        return;
+    }
+
+    const habit  = habits.find(h => h.id === habitId);
+    const friend = friends.find(f => String(f.id) === String(friendId));
+
+    const challenge = {
+        id:        Date.now().toString(),
+        habitId,
+        habitName: habit.name,
+        habitIcon: habit.icon,
+        friendId:  friend.id,
+        friendName: friend.firstName || friend.username,
+        friendUsername: friend.username,
+        duration,
+        startDate: new Date().toISOString().split('T')[0],
+        status:    'active',
+        myProgress:     0,
+        friendProgress: 0
+    };
+
+    challenges.push(challenge);
+    lsSet('challenges', challenges);
+
+    try {
+        await fetch(`${SERVER_URL}/api/challenges/create`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                challengeId:    challenge.id,
+                fromUserId:     currentUser.id,
+                fromUserName:   currentUser.first_name,
+                toUserId:       friend.id,
+                toUsername:     friend.username,
+                habitName:      habit.name,
+                habitIcon:      habit.icon,
+                duration
+            })
+        });
+    } catch(e) {
+        console.log('Не удалось отправить вызов на сервер');
+    }
+
+    closeChallengeModal();
+    renderChallenges();
+    alert(`Вызов отправлен @${friend.username}! 🏆`);
+}
+
+function getChallengeProgress(challenge) {
+    const start  = new Date(challenge.startDate);
+    const today  = new Date();
+    today.setHours(0,0,0,0);
+    let myDone   = 0;
+    const daysTotal = challenge.duration;
+
+    for (let i = 0; i < daysTotal; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        if (d > today) break;
+        const key  = dateKey(d);
+        const prog = (progress[key] || {})[challenge.habitId] || 0;
+        const hab  = habits.find(h => h.id === challenge.habitId);
+        if (hab && prog >= hab.count) myDone++;
+    }
+    return myDone;
+}
+
+function getDaysLeft(challenge) {
+    const start = new Date(challenge.startDate);
+    const end   = new Date(start);
+    end.setDate(start.getDate() + challenge.duration);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diff  = Math.ceil((end - today) / (1000*60*60*24));
+    return Math.max(0, diff);
+}
+
+function renderChallenges() {
+    const container = document.getElementById('challengesList');
+    if (!container) return;
+
+    const active = challenges.filter(c => c.status === 'active');
+
+    if (active.length === 0) {
+        container.innerHTML = `
+            <div class="friends-empty">
+                <span class="empty-icon">🏆</span>
+                <span>Нет активных вызовов</span>
+                <span style="font-size:12px;margin-top:4px;">Создайте вызов с другом!</span>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = active.map(c => {
+        const myDone   = getChallengeProgress(c);
+        const daysLeft = getDaysLeft(c);
+        const myPct    = Math.min(100, Math.round((myDone / c.duration) * 100));
+        const frPct    = Math.min(100, Math.round(((c.friendProgress || 0) / c.duration) * 100));
+        const isWin    = myPct >= frPct;
+
+        return `
+        <div class="challenge-card">
+            <div class="challenge-header">
+                <span class="challenge-icon">${c.habitIcon}</span>
+                <div class="challenge-info">
+                    <div class="challenge-name">${c.habitName}</div>
+                    <div class="challenge-meta">vs @${c.friendUsername} · ${daysLeft} дн. осталось</div>
+                </div>
+                <button class="challenge-delete-btn" onclick="deleteChallenge('${c.id}')">×</button>
+            </div>
+            <div class="challenge-scores">
+                <div class="score-row">
+                    <span class="score-label">Ты ${isWin ? '👑' : ''}</span>
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-fill mine" style="width:${myPct}%"></div>
+                    </div>
+                    <span class="score-num">${myDone}/${c.duration}</span>
+                </div>
+                <div class="score-row">
+                    <span class="score-label">@${c.friendUsername}</span>
+                    <div class="score-bar-wrap">
+                        <div class="score-bar-fill friend" style="width:${frPct}%"></div>
+                    </div>
+                    <span class="score-num">${c.friendProgress || 0}/${c.duration}</span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function deleteChallenge(id) {
+    challenges = challenges.filter(c => c.id !== id);
+    lsSet('challenges', challenges);
+    renderChallenges();
+}
