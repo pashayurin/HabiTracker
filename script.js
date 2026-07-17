@@ -254,7 +254,14 @@ function renderHabits() {
     if (!list) return;
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-    const filtered      = habits.filter(h => isHabitActiveOnDate(h, currentDate));
+
+    // Фильтруем: только НЕ из вызовов и активные сегодня
+    const filtered = habits.filter(h =>
+        !h.fromChallenge &&
+        !h.challengeId &&
+        isHabitActiveOnDate(h, currentDate)
+    );
+
     if (filtered.length === 0) {
         list.innerHTML = `
             <div class="empty-msg">
@@ -288,7 +295,6 @@ function renderHabits() {
         </div>`;
     }).join('');
 }
-
 function addProgress(id) {
     const key = dateKey(currentDate);
     if (!progress[key]) progress[key] = {};
@@ -1201,3 +1207,76 @@ async function deleteChallenge(id) {
         });
     } catch(e) {}
 }
+function switchHomeTab(tab, el) {
+    document.querySelectorAll('.home-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('homeTabPersonalContent').style.display   = tab === 'personal'   ? 'block' : 'none';
+    document.getElementById('homeTabChallengesContent').style.display = tab === 'challenges' ? 'block' : 'none';
+    if (tab === 'challenges') renderChallengeHabits();
+}
+function renderChallengeHabits() {
+    const list = document.getElementById('challengeHabitsList');
+    if (!list) return;
+
+    const key           = dateKey(currentDate);
+    const todayProgress = progress[key] || {};
+
+    // Только привычки из вызовов
+    const challengeHabits = habits.filter(h => h.fromChallenge || h.challengeId);
+
+    if (challengeHabits.length === 0) {
+        list.innerHTML = `
+            <div class="empty-msg">
+                <span class="empty-icon">⚡</span>
+                <span>Нет активных вызовов</span>
+                <span style="font-size:12px;margin-top:4px;">Создайте вызов с другом в разделе "Друзья"</span>
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = challengeHabits.map(h => {
+        const done      = todayProgress[h.id] || 0;
+        const total     = h.count || 1;
+        const pct       = Math.min(100, Math.round((done / total) * 100));
+        const completed = done >= total;
+
+        const challenge = challenges.find(c =>
+            c.id === h.challengeId ||
+            c.id === h.id.replace('challenge_', '')
+        );
+        const friendName = challenge ? `vs @${challenge.friendUsername}` : '';
+
+        return `
+        <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${h.id}">
+            <div class="habit-card-inner">
+                <div class="habit-icon-circle">${h.icon || '⭐'}</div>
+                <div class="habit-middle">
+                    <div class="habit-name">${h.name}</div>
+                    <div class="challenge-vs-label">${friendName}</div>
+                    <div class="habit-sub">${done} / ${total} ${h.unit || 'раз'}</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
+                    </div>
+                </div>
+                <div class="card-btns">
+                    <button class="plus-btn" onclick="addProgressChallenge('${h.id}')">+</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+async function addProgressChallenge(habitId) {
+    const key   = dateKey(currentDate);
+    if (!progress[key]) progress[key] = {};
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+    const current = progress[key][habitId] || 0;
+    if (current < habit.count) {
+        progress[key][habitId] = current + 1;
+        lsSet('progress', progress);
+        renderChallengeHabits();
+        await syncChallengeProgress();
+        await syncWithServer();
+    }
+}
+
