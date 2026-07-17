@@ -710,6 +710,7 @@ function switchFriendsTab(tab, el) {
     document.querySelectorAll('.friends-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     document.getElementById('friendsTabChallenges').style.display  = tab === 'challenges'  ? 'block' : 'none';
+    document.getElementById('friendsTabRequests').style.display    = tab === 'requests'    ? 'block' : 'none';
     document.getElementById('friendsTabFriendsList').style.display = tab === 'friendsList' ? 'block' : 'none';
 }
 
@@ -737,29 +738,41 @@ async function loadFriendRequests() {
 }
 
 function renderFriendRequests() {
-    const block = document.getElementById('friendRequestsBlock');
-    const list  = document.getElementById('friendRequestsList');
-    if (!block || !list) return;
+    // Рендерим в отдельную вкладку
+    const list2  = document.getElementById('friendRequestsList2');
+    const badge  = document.getElementById('requestsBadge');
 
-    if (friendRequests.length === 0) {
-        block.style.display = 'none';
-        return;
+    if (badge) {
+        if (friendRequests.length > 0) {
+            badge.style.display = 'inline';
+            badge.textContent   = friendRequests.length;
+        } else {
+            badge.style.display = 'none';
+        }
     }
 
-    block.style.display = 'block';
-    list.innerHTML = friendRequests.map(r => `
-        <div class="friend-request-card">
-            <div class="friend-avatar">${(r.fromUserName || r.fromUsername || '?')[0].toUpperCase()}</div>
-            <div class="friend-info">
-                <div class="friend-name">${r.fromUserName || r.fromUsername}</div>
-                <div class="friend-username">@${r.fromUsername}</div>
+    const emptyHtml = `
+        <div class="friends-empty">
+            <span class="empty-icon">📩</span>
+            <span>Нет входящих заявок</span>
+        </div>`;
+
+    const requestsHtml = friendRequests.length === 0 ? emptyHtml :
+        friendRequests.map(r => `
+            <div class="friend-request-card">
+                <div class="friend-avatar">${(r.fromUserName || r.fromUsername || '?')[0].toUpperCase()}</div>
+                <div class="friend-info">
+                    <div class="friend-name">${r.fromUserName || r.fromUsername}</div>
+                    <div class="friend-username">@${r.fromUsername}</div>
+                </div>
+                <div class="request-btns">
+                    <button class="req-accept-btn" onclick="respondToRequest('${r._id}', 'accept', ${r.fromUserId}, '${r.fromUserName}', '${r.fromUsername}')">✓</button>
+                    <button class="req-decline-btn" onclick="respondToRequest('${r._id}', 'decline')">✗</button>
+                </div>
             </div>
-            <div class="request-btns">
-                <button class="req-accept-btn" onclick="respondToRequest('${r._id}', 'accept', ${r.fromUserId}, '${r.fromUserName}', '${r.fromUsername}')">✓</button>
-                <button class="req-decline-btn" onclick="respondToRequest('${r._id}', 'decline')">✗</button>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
+
+    if (list2) list2.innerHTML = requestsHtml;
 }
 
 async function respondToRequest(requestId, action, fromUserId, fromUserName, fromUsername) {
@@ -771,16 +784,15 @@ async function respondToRequest(requestId, action, fromUserId, fromUserName, fro
         });
         if (res.ok) {
             const data = await res.json();
-            // Убираем заявку из списка
             friendRequests = friendRequests.filter(r => r._id !== requestId);
 
-            if (action === 'accept' && data.newFriend) {
-                // Добавляем в друзья локально
-                if (!friends.find(f => f.id === data.newFriend.id)) {
+            if (action === 'accept' && data.newFriendForAcceptor) {
+                // Добавляем отправителя заявки к себе в друзья
+                if (!friends.find(f => String(f.id) === String(data.newFriendForAcceptor.id))) {
                     friends.push({
-                        id:        data.newFriend.id,
-                        username:  data.newFriend.username,
-                        firstName: data.newFriend.firstName,
+                        id:        data.newFriendForAcceptor.id,
+                        username:  data.newFriendForAcceptor.username,
+                        firstName: data.newFriendForAcceptor.firstName,
                         addedAt:   new Date().toISOString()
                     });
                     lsSet('friends', friends);
@@ -881,31 +893,60 @@ async function loadChallengesFromServer() {
         const res = await fetch(`${SERVER_URL}/api/challenges/${currentUser.id}`);
         if (res.ok) {
             const data = await res.json();
-            if (data.challenges && data.challenges.length > 0) {
-                // Мержим серверные вызовы с локальными
+            if (data.challenges) {
                 data.challenges.forEach(sc => {
                     const existing = challenges.find(c => c.id === sc.challengeId);
+                    const iAmFrom  = String(sc.fromUserId) === String(currentUser.id);
+
                     if (!existing) {
-                        // Определяем с чьей стороны мы
-                        const iAmFrom = String(sc.fromUserId) === String(currentUser.id);
-                        challenges.push({
+                        // Новый вызов с сервера — добавляем локально
+                        const newChallenge = {
                             id:             sc.challengeId,
                             habitName:      sc.habitName,
                             habitIcon:      sc.habitIcon,
-                            friendId:       iAmFrom ? sc.toUserId   : sc.fromUserId,
-                            friendUsername: iAmFrom ? sc.toUsername  : sc.fromUsername || '',
-                            friendName:     iAmFrom ? sc.toUsername  : sc.fromUserName,
+                            habitCount:     sc.habitCount || 1,
+                            habitUnit:      sc.habitUnit  || 'раз',
+                            friendId:       iAmFrom ? sc.toUserId    : sc.fromUserId,
+                            friendUsername: iAmFrom ? sc.toUsername   : (sc.fromUsername || ''),
+                            friendName:     iAmFrom ? sc.toUsername   : sc.fromUserName,
                             duration:       sc.duration,
                             startDate:      sc.startDate,
                             status:         sc.status,
                             myProgress:     iAmFrom ? sc.fromProgress : sc.toProgress,
                             friendProgress: iAmFrom ? sc.toProgress   : sc.fromProgress,
-                            iAmFrom
-                        });
+                            iAmFrom,
+                            fromServer: true
+                        };
+                        challenges.push(newChallenge);
+
+                        // ✅ Если это НЕ я создавал — создаём привычку автоматически
+                        if (!iAmFrom) {
+                            const habitExists = habits.find(h =>
+                                h.name === sc.habitName && h.challengeId === sc.challengeId
+                            );
+                            if (!habitExists) {
+                                const newHabit = {
+                                    id:          `challenge_${sc.challengeId}`,
+                                    name:        sc.habitName,
+                                    icon:        sc.habitIcon,
+                                    count:       sc.habitCount || 1,
+                                    unit:        sc.habitUnit  || 'раз',
+                                    days:        [],
+                                    dayMode:     'weekday',
+                                    reminder:    false,
+                                    startDate:   sc.startDate,
+                                    challengeId: sc.challengeId,
+                                    fromChallenge: true
+                                };
+                                habits.push(newHabit);
+                                lsSet('habits', habits);
+                                renderHabits();
+                                syncWithServer();
+                            }
+                        }
                     } else {
-                        // Обновляем прогресс друга
-                        const iAmFrom = String(sc.fromUserId) === String(currentUser.id);
-                        existing.friendProgress = iAmFrom ? sc.toProgress : sc.fromProgress;
+                        // Обновляем прогресс
+                        existing.friendProgress = iAmFrom ? sc.toProgress   : sc.fromProgress;
                         existing.myProgress     = iAmFrom ? sc.fromProgress : sc.toProgress;
                     }
                 });
@@ -974,6 +1015,8 @@ async function saveChallenge() {
                 toUsername:   friend.username,
                 habitName:    habit.name,
                 habitIcon:    habit.icon,
+                habitCount:   habit.count,
+                habitUnit:    habit.unit,
                 duration,
                 startDate
             })
@@ -986,6 +1029,8 @@ async function saveChallenge() {
                 habitId,
                 habitName:      habit.name,
                 habitIcon:      habit.icon,
+                habitCount:     habit.count,
+                habitUnit:      habit.unit,
                 friendId:       friend.id,
                 friendName:     friend.firstName || friend.username,
                 friendUsername: friend.username,
