@@ -1183,3 +1183,69 @@ body {
     text-align: right;
     flex-shrink: 0;
 }
+/* Заявки в друзья */
+.requests-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--border);
+}
+
+.friend-request-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #FFF8E8;
+    border: 1.5px solid #FFD966;
+    border-radius: 18px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+}
+
+.request-btns {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.req-accept-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: var(--success);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(67,201,142,0.4);
+    transition: transform 0.15s;
+}
+.req-accept-btn:active { transform: scale(0.88); }
+
+.req-decline-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.req-decline-btn:active {
+    background: #FFE8ED;
+    border-color: var(--accent);
+    color: var(--accent);
+}
