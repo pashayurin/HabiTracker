@@ -704,6 +704,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== ДРУЗЬЯ =====
 // =============================================
 
+let friendRequests = []; // входящие заявки
+
 function switchFriendsTab(tab, el) {
     document.querySelectorAll('.friends-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
@@ -711,10 +713,88 @@ function switchFriendsTab(tab, el) {
     document.getElementById('friendsTabFriendsList').style.display = tab === 'friendsList' ? 'block' : 'none';
 }
 
-function renderFriendsPage() {
-    renderChallenges();
+async function renderFriendsPage() {
+    await loadFriendRequests();
+    await loadChallengesFromServer();
     renderFriendsList();
+    renderChallenges();
 }
+
+// ===== ЗАЯВКИ В ДРУЗЬЯ =====
+
+async function loadFriendRequests() {
+    if (!currentUser || !currentUser.id) return;
+    try {
+        const res = await fetch(`${SERVER_URL}/api/friends/requests/${currentUser.id}`);
+        if (res.ok) {
+            const data = await res.json();
+            friendRequests = data.requests || [];
+            renderFriendRequests();
+        }
+    } catch(e) {
+        console.log('Не удалось загрузить заявки');
+    }
+}
+
+function renderFriendRequests() {
+    const block = document.getElementById('friendRequestsBlock');
+    const list  = document.getElementById('friendRequestsList');
+    if (!block || !list) return;
+
+    if (friendRequests.length === 0) {
+        block.style.display = 'none';
+        return;
+    }
+
+    block.style.display = 'block';
+    list.innerHTML = friendRequests.map(r => `
+        <div class="friend-request-card">
+            <div class="friend-avatar">${(r.fromUserName || r.fromUsername || '?')[0].toUpperCase()}</div>
+            <div class="friend-info">
+                <div class="friend-name">${r.fromUserName || r.fromUsername}</div>
+                <div class="friend-username">@${r.fromUsername}</div>
+            </div>
+            <div class="request-btns">
+                <button class="req-accept-btn" onclick="respondToRequest('${r._id}', 'accept', ${r.fromUserId}, '${r.fromUserName}', '${r.fromUsername}')">✓</button>
+                <button class="req-decline-btn" onclick="respondToRequest('${r._id}', 'decline')">✗</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function respondToRequest(requestId, action, fromUserId, fromUserName, fromUsername) {
+    try {
+        const res = await fetch(`${SERVER_URL}/api/friends/respond`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ requestId, action, userId: currentUser.id })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            // Убираем заявку из списка
+            friendRequests = friendRequests.filter(r => r._id !== requestId);
+
+            if (action === 'accept' && data.newFriend) {
+                // Добавляем в друзья локально
+                if (!friends.find(f => f.id === data.newFriend.id)) {
+                    friends.push({
+                        id:        data.newFriend.id,
+                        username:  data.newFriend.username,
+                        firstName: data.newFriend.firstName,
+                        addedAt:   new Date().toISOString()
+                    });
+                    lsSet('friends', friends);
+                }
+            }
+            renderFriendRequests();
+            renderFriendsList();
+        }
+    } catch(e) {
+        alert('Ошибка. Попробуйте позже');
+    }
+}
+
+// ===== ДОБАВИТЬ ДРУГА =====
 
 async function addFriend() {
     const input    = document.getElementById('friendUsernameInput');
@@ -724,8 +804,12 @@ async function addFriend() {
         alert('Войдите через Telegram чтобы добавлять друзей');
         return;
     }
-    if (friends.find(f => f.username === username)) {
+    if (friends.find(f => f.username?.toLowerCase() === username.toLowerCase())) {
         alert('Этот друг уже добавлен');
+        return;
+    }
+    if (username.toLowerCase() === (currentUser.username || '').toLowerCase()) {
+        alert('Нельзя добавить самого себя');
         return;
     }
     try {
@@ -733,20 +817,19 @@ async function addFriend() {
         if (res.ok) {
             const data = await res.json();
             if (data.found) {
-                friends.push({
-                    id:        data.telegramId,
-                    username:  data.username,
-                    firstName: data.firstName,
-                    addedAt:   new Date().toISOString()
-                });
-                lsSet('friends', friends);
-                input.value = '';
-                renderFriendsList();
-                await fetch(`${SERVER_URL}/api/friends/add`, {
+                // Отправляем заявку в друзья
+                const reqRes = await fetch(`${SERVER_URL}/api/friends/request`, {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ userId: currentUser.id, friendId: data.telegramId })
+                    body:    JSON.stringify({
+                        fromUserId: currentUser.id,
+                        toUserId:   data.telegramId
+                    })
                 });
+                if (reqRes.ok) {
+                    input.value = '';
+                    alert(`Заявка отправлена @${data.username}! Ждите подтверждения 👥`);
+                }
             } else {
                 alert('Пользователь не найден. Попросите друга открыть HabiTracker через бота');
             }
@@ -759,7 +842,7 @@ async function addFriend() {
 }
 
 function removeFriend(friendId) {
-    friends = friends.filter(f => f.id !== friendId);
+    friends = friends.filter(f => String(f.id) !== String(friendId));
     lsSet('friends', friends);
     renderFriendsList();
 }
@@ -783,9 +866,55 @@ function renderFriendsList() {
                 <div class="friend-name">${f.firstName || f.username}</div>
                 <div class="friend-username">@${f.username}</div>
             </div>
-            <button class="friend-remove-btn" onclick="removeFriend(${f.id})">×</button>
+            <button class="friend-remove-btn" onclick="removeFriend('${f.id}')">×</button>
         </div>
     `).join('');
+}
+
+// =============================================
+// ===== ВЫЗОВЫ =====
+// =============================================
+
+async function loadChallengesFromServer() {
+    if (!currentUser || !currentUser.id) return;
+    try {
+        const res = await fetch(`${SERVER_URL}/api/challenges/${currentUser.id}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.challenges && data.challenges.length > 0) {
+                // Мержим серверные вызовы с локальными
+                data.challenges.forEach(sc => {
+                    const existing = challenges.find(c => c.id === sc.challengeId);
+                    if (!existing) {
+                        // Определяем с чьей стороны мы
+                        const iAmFrom = String(sc.fromUserId) === String(currentUser.id);
+                        challenges.push({
+                            id:             sc.challengeId,
+                            habitName:      sc.habitName,
+                            habitIcon:      sc.habitIcon,
+                            friendId:       iAmFrom ? sc.toUserId   : sc.fromUserId,
+                            friendUsername: iAmFrom ? sc.toUsername  : sc.fromUsername || '',
+                            friendName:     iAmFrom ? sc.toUsername  : sc.fromUserName,
+                            duration:       sc.duration,
+                            startDate:      sc.startDate,
+                            status:         sc.status,
+                            myProgress:     iAmFrom ? sc.fromProgress : sc.toProgress,
+                            friendProgress: iAmFrom ? sc.toProgress   : sc.fromProgress,
+                            iAmFrom
+                        });
+                    } else {
+                        // Обновляем прогресс друга
+                        const iAmFrom = String(sc.fromUserId) === String(currentUser.id);
+                        existing.friendProgress = iAmFrom ? sc.toProgress : sc.fromProgress;
+                        existing.myProgress     = iAmFrom ? sc.fromProgress : sc.toProgress;
+                    }
+                });
+                lsSet('challenges', challenges);
+            }
+        }
+    } catch(e) {
+        console.log('Не удалось загрузить вызовы');
+    }
 }
 
 function openChallengeModal() {
@@ -821,68 +950,70 @@ function closeChallengeModalOutside(e) {
 }
 
 async function saveChallenge() {
-    const habitId   = document.getElementById('challengeHabitSelect').value;
-    const friendId  = document.getElementById('challengeFriendSelect').value;
-    const duration  = parseInt(document.getElementById('challengeDuration').value);
+    const habitId  = document.getElementById('challengeHabitSelect').value;
+    const friendId = document.getElementById('challengeFriendSelect').value;
+    const duration = parseInt(document.getElementById('challengeDuration').value);
 
     if (!habitId || !friendId) {
         alert('Выберите привычку и друга');
         return;
     }
 
-    const habit  = habits.find(h => h.id === habitId);
-    const friend = friends.find(f => String(f.id) === String(friendId));
-
-    const challenge = {
-        id:        Date.now().toString(),
-        habitId,
-        habitName: habit.name,
-        habitIcon: habit.icon,
-        friendId:  friend.id,
-        friendName: friend.firstName || friend.username,
-        friendUsername: friend.username,
-        duration,
-        startDate: new Date().toISOString().split('T')[0],
-        status:    'active',
-        myProgress:     0,
-        friendProgress: 0
-    };
-
-    challenges.push(challenge);
-    lsSet('challenges', challenges);
+    const habit     = habits.find(h => h.id === habitId);
+    const friend    = friends.find(f => String(f.id) === String(friendId));
+    const startDate = new Date().toISOString().split('T')[0];
 
     try {
-        await fetch(`${SERVER_URL}/api/challenges/create`, {
+        const res = await fetch(`${SERVER_URL}/api/challenges/create`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
-                challengeId:    challenge.id,
-                fromUserId:     currentUser.id,
-                fromUserName:   currentUser.first_name,
-                toUserId:       friend.id,
-                toUsername:     friend.username,
-                habitName:      habit.name,
-                habitIcon:      habit.icon,
-                duration
+                fromUserId:   currentUser.id,
+                fromUserName: currentUser.first_name,
+                toUserId:     friend.id,
+                toUsername:   friend.username,
+                habitName:    habit.name,
+                habitIcon:    habit.icon,
+                duration,
+                startDate
             })
         });
-    } catch(e) {
-        console.log('Не удалось отправить вызов на сервер');
-    }
 
-    closeChallengeModal();
-    renderChallenges();
-    alert(`Вызов отправлен @${friend.username}! 🏆`);
+        if (res.ok) {
+            const data = await res.json();
+            const challenge = {
+                id:             data.challengeId,
+                habitId,
+                habitName:      habit.name,
+                habitIcon:      habit.icon,
+                friendId:       friend.id,
+                friendName:     friend.firstName || friend.username,
+                friendUsername: friend.username,
+                duration,
+                startDate,
+                status:         'active',
+                myProgress:     0,
+                friendProgress: 0,
+                iAmFrom:        true
+            };
+            challenges.push(challenge);
+            lsSet('challenges', challenges);
+            closeChallengeModal();
+            renderChallenges();
+            alert(`Вызов отправлен @${friend.username}! 🏆`);
+        }
+    } catch(e) {
+        alert('Ошибка создания вызова');
+    }
 }
 
 function getChallengeProgress(challenge) {
-    const start  = new Date(challenge.startDate);
-    const today  = new Date();
-    today.setHours(0,0,0,0);
-    let myDone   = 0;
-    const daysTotal = challenge.duration;
-
-    for (let i = 0; i < daysTotal; i++) {
+    if (!challenge.habitId) return challenge.myProgress || 0;
+    const start = new Date(challenge.startDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let myDone = 0;
+    for (let i = 0; i < challenge.duration; i++) {
         const d = new Date(start);
         d.setDate(start.getDate() + i);
         if (d > today) break;
@@ -899,17 +1030,37 @@ function getDaysLeft(challenge) {
     const end   = new Date(start);
     end.setDate(start.getDate() + challenge.duration);
     const today = new Date();
-    today.setHours(0,0,0,0);
-    const diff  = Math.ceil((end - today) / (1000*60*60*24));
-    return Math.max(0, diff);
+    today.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.ceil((end - today) / (1000 * 60 * 60 * 24)));
+}
+
+async function syncChallengeProgress() {
+    if (!currentUser || !currentUser.id) return;
+    for (const c of challenges) {
+        if (c.status !== 'active' || !c.habitId) continue;
+        const myDone = getChallengeProgress(c);
+        if (myDone !== c.myProgress) {
+            c.myProgress = myDone;
+            try {
+                await fetch(`${SERVER_URL}/api/challenges/progress`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        challengeId: c.id,
+                        userId:      currentUser.id,
+                        progress:    myDone
+                    })
+                });
+            } catch(e) {}
+        }
+    }
+    lsSet('challenges', challenges);
 }
 
 function renderChallenges() {
     const container = document.getElementById('challengesList');
     if (!container) return;
-
     const active = challenges.filter(c => c.status === 'active');
-
     if (active.length === 0) {
         container.innerHTML = `
             <div class="friends-empty">
@@ -919,14 +1070,13 @@ function renderChallenges() {
             </div>`;
         return;
     }
-
     container.innerHTML = active.map(c => {
-        const myDone   = getChallengeProgress(c);
+        const myDone   = c.habitId ? getChallengeProgress(c) : (c.myProgress || 0);
+        const frDone   = c.friendProgress || 0;
         const daysLeft = getDaysLeft(c);
         const myPct    = Math.min(100, Math.round((myDone / c.duration) * 100));
-        const frPct    = Math.min(100, Math.round(((c.friendProgress || 0) / c.duration) * 100));
+        const frPct    = Math.min(100, Math.round((frDone / c.duration) * 100));
         const isWin    = myPct >= frPct;
-
         return `
         <div class="challenge-card">
             <div class="challenge-header">
@@ -947,18 +1097,25 @@ function renderChallenges() {
                 </div>
                 <div class="score-row">
                     <span class="score-label">@${c.friendUsername}</span>
-                    <div class="score-bar-wrap">
+                                        <div class="score-bar-wrap">
                         <div class="score-bar-fill friend" style="width:${frPct}%"></div>
                     </div>
-                    <span class="score-num">${c.friendProgress || 0}/${c.duration}</span>
+                    <span class="score-num">${frDone}/${c.duration}</span>
                 </div>
             </div>
         </div>`;
     }).join('');
 }
 
-function deleteChallenge(id) {
+async function deleteChallenge(id) {
     challenges = challenges.filter(c => c.id !== id);
     lsSet('challenges', challenges);
     renderChallenges();
+    try {
+        await fetch(`${SERVER_URL}/api/challenges/delete`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ challengeId: id })
+        });
+    } catch(e) {}
 }
