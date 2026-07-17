@@ -330,7 +330,8 @@
     </div>
     <div class="friends-tabs">
         <button class="friends-tab active" id="tabChallenges" onclick="switchFriendsTab('challenges', this)">🏆 Вызовы</button>
-        <button class="friends-tab" id="tabFriends" onclick="switchFriendsTab('friendsList', this)">👤 Друзья</button>
+        <button class="friends-tab" id="tabRequests"   onclick="switchFriendsTab('requests', this)">📩 Заявки <span id="requestsBadge" style="display:none;background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:3px;"></span></button>
+        <button class="friends-tab" id="tabFriends"    onclick="switchFriendsTab('friendsList', this)">👤 Друзья</button>
     </div>
 
     <!-- ВКЛАДКА ВЫЗОВЫ -->
@@ -339,14 +340,13 @@
         <button class="add-challenge-btn" onclick="openChallengeModal()">⚡ Создать вызов</button>
     </div>
 
+    <!-- ВКЛАДКА ЗАЯВКИ -->
+    <div id="friendsTabRequests" style="display:none;">
+        <div id="friendRequestsList2"></div>
+    </div>
+
     <!-- ВКЛАДКА ДРУЗЬЯ -->
     <div id="friendsTabFriendsList" style="display:none;">
-        <!-- Входящие заявки -->
-        <div id="friendRequestsBlock" style="display:none;">
-            <div class="requests-title">📩 Входящие заявки</div>
-            <div id="friendRequestsList"></div>
-        </div>
-        <!-- Добавить друга -->
         <div class="add-friend-box">
             <input type="text" class="friend-input" id="friendUsernameInput" placeholder="@username друга">
             <button class="add-friend-btn" onclick="addFriend()">Добавить</button>
@@ -354,7 +354,6 @@
         <div id="friendsListContainer"></div>
     </div>
 </main>
-
 <!-- МОДАЛКА ВЫЗОВ -->
 <div class="modal-overlay" id="challengeModalOverlay" onclick="closeChallengeModalOutside(event)">
     <div class="modal">
