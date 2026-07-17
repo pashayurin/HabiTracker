@@ -1249,3 +1249,37 @@ body {
     border-color: var(--accent);
     color: var(--accent);
 }
+/* Вкладки главной */
+.home-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.home-tab {
+    flex: 1;
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', Arial, sans-serif;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.home-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(108,99,255,0.35);
+}
+.challenge-habit-card {
+    border-left: 3px solid var(--accent);
+}
+.challenge-vs-label {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 11px;
+    margin-bottom: 2px;
+}
