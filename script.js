@@ -716,6 +716,7 @@ function switchFriendsTab(tab, el) {
 
 async function renderFriendsPage() {
     await loadFriendRequests();
+    await loadAcceptedRequests(); // ← новое
     await loadChallengesFromServer();
     renderFriendsList();
     renderChallenges();
@@ -734,6 +735,42 @@ async function loadFriendRequests() {
         }
     } catch(e) {
         console.log('Не удалось загрузить заявки');
+    }
+}
+// Проверяем — кто принял нашу заявку
+async function loadAcceptedRequests() {
+    if (!currentUser || !currentUser.id) return;
+    try {
+        const res = await fetch(`${SERVER_URL}/api/friends/accepted/${currentUser.id}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.requests && data.requests.length > 0) {
+                data.requests.forEach(r => {
+                    // toUser принял нашу заявку — добавляем его себе в друзья
+                    const toUserId = r.toUserId;
+                    if (!friends.find(f => String(f.id) === String(toUserId))) {
+                        // Нужно получить данные принявшего пользователя
+                        fetch(`${SERVER_URL}/api/user/${toUserId}`)
+                            .then(res => res.json())
+                            .then(userData => {
+                                if (userData && userData.telegramId) {
+                                    friends.push({
+                                        id:        userData.telegramId,
+                                        username:  userData.username,
+                                        firstName: userData.firstName,
+                                        addedAt:   new Date().toISOString()
+                                    });
+                                    lsSet('friends', friends);
+                                    renderFriendsList();
+                                }
+                            })
+                            .catch(() => {});
+                    }
+                });
+            }
+        }
+    } catch(e) {
+        console.log('Не удалось загрузить принятые заявки');
     }
 }
 
