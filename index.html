@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 
@@ -22,8 +22,23 @@
         <span class="date-nav-label" id="mainDateLabel">загрузка...</span>
         <button class="date-nav-arrow" onclick="changeMainDate(1)">&#8250;</button>
     </div>
-    <button class="add-habit-btn" onclick="openModal()">+ Добавить новую привычку</button>
-    <div class="habits-list" id="habitsList"></div>
+
+    <!-- Вкладки главной -->
+    <div class="home-tabs">
+        <button class="home-tab active" onclick="switchHomeTab('personal', this)">🏠 Личные</button>
+        <button class="home-tab"        onclick="switchHomeTab('challenges', this)">⚡ Вызовы</button>
+    </div>
+
+    <!-- Личные привычки -->
+    <div id="homeTabPersonalContent">
+        <button class="add-habit-btn" onclick="openModal()">+ Добавить новую привычку</button>
+        <div class="habits-list" id="habitsList"></div>
+    </div>
+
+    <!-- Вызовы -->
+    <div id="homeTabChallengesContent" style="display:none;">
+        <div class="habits-list" id="challengeHabitsList"></div>
+    </div>
 </main>
 
 <main class="content page" id="page-profile">
@@ -321,8 +336,8 @@
     </div>
 </div>
 
-<script src="script.js?v=16"></script>
-<!-- СТРАНИЦА ДРУЗЬЯ — вставить перед закрывающим </body> -->
+<script src="script.js?v=17"></script>
+
 <main class="content page" id="page-friends">
     <div class="friends-header">
         <h2 class="friends-title">👥 Друзья</h2>
@@ -330,8 +345,8 @@
     </div>
     <div class="friends-tabs">
         <button class="friends-tab active" id="tabChallenges" onclick="switchFriendsTab('challenges', this)">🏆 Вызовы</button>
-        <button class="friends-tab" id="tabRequests"   onclick="switchFriendsTab('requests', this)">📩 Заявки <span id="requestsBadge" style="display:none;background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:3px;"></span></button>
-        <button class="friends-tab" id="tabFriends"    onclick="switchFriendsTab('friendsList', this)">👤 Друзья</button>
+        <button class="friends-tab" id="tabRequests" onclick="switchFriendsTab('requests', this)">📩 Заявки <span id="requestsBadge" style="display:none;background:var(--accent);color:#fff;border-radius:50%;padding:1px 6px;font-size:11px;margin-left:3px;"></span></button>
+        <button class="friends-tab" id="tabFriends" onclick="switchFriendsTab('friendsList', this)">👤 Друзья</button>
     </div>
 
     <!-- ВКЛАДКА ВЫЗОВЫ -->
@@ -354,6 +369,7 @@
         <div id="friendsListContainer"></div>
     </div>
 </main>
+
 <!-- МОДАЛКА ВЫЗОВ -->
 <div class="modal-overlay" id="challengeModalOverlay" onclick="closeChallengeModalOutside(event)">
     <div class="modal">
@@ -388,5 +404,6 @@
         </div>
     </div>
 </div>
+
 </body>
 </html>
