@@ -1001,28 +1001,53 @@ async function loadChallengesFromServer() {
     }
 }
 
+let challengeIconValue     = '⭐';
+let challengeIconPickerOpen = false;
+
 function openChallengeModal() {
     if (!currentUser || !currentUser.id) {
         alert('Войдите через Telegram чтобы создавать вызовы');
-        return;
-    }
-    if (habits.length === 0) {
-        alert('Сначала добавьте хотя бы одну привычку');
         return;
     }
     if (friends.length === 0) {
         alert('Сначала добавьте друга во вкладке "Друзья"');
         return;
     }
-    const habitSel = document.getElementById('challengeHabitSelect');
-    habitSel.innerHTML = '<option value="">выберите...</option>' +
-        habits.map(h => `<option value="${h.id}">${h.icon} ${h.name}</option>`).join('');
 
+    // Сброс полей
+    challengeIconValue = '⭐';
+    document.getElementById('challengeSelectedIcon').textContent = '⭐';
+    document.getElementById('challengeHabitName').value  = '';
+    document.getElementById('challengeHabitCount').value = '';
+    document.getElementById('challengeHabitUnit').value  = 'раз';
+    document.getElementById('challengeIconPicker').classList.remove('open');
+    challengeIconPickerOpen = false;
+
+    // Заполняем друзей
     const friendSel = document.getElementById('challengeFriendSelect');
     friendSel.innerHTML = '<option value="">выберите...</option>' +
         friends.map(f => `<option value="${f.id}">@${f.username}</option>`).join('');
 
+    // Строим сетку иконок
+    const grid = document.getElementById('challengeIconGrid');
+    grid.innerHTML = ICONS.map(ic =>
+        `<button class="icon-option" onclick="selectChallengeIcon('${ic}')">${ic}</button>`
+    ).join('');
+
     document.getElementById('challengeModalOverlay').classList.add('active');
+}
+
+function toggleChallengeIconPicker(e) {
+    e.stopPropagation();
+    challengeIconPickerOpen = !challengeIconPickerOpen;
+    document.getElementById('challengeIconPicker').classList.toggle('open', challengeIconPickerOpen);
+}
+
+function selectChallengeIcon(ic) {
+    challengeIconValue = ic;
+    document.getElementById('challengeSelectedIcon').textContent = ic;
+    document.getElementById('challengeIconPicker').classList.remove('open');
+    challengeIconPickerOpen = false;
 }
 
 function closeChallengeModal() {
@@ -1034,16 +1059,24 @@ function closeChallengeModalOutside(e) {
 }
 
 async function saveChallenge() {
-    const habitId  = document.getElementById('challengeHabitSelect').value;
-    const friendId = document.getElementById('challengeFriendSelect').value;
-    const duration = parseInt(document.getElementById('challengeDuration').value);
+    const nameInput = document.getElementById('challengeHabitName');
+    const name      = nameInput.value.trim();
+    const friendId  = document.getElementById('challengeFriendSelect').value;
+    const duration  = parseInt(document.getElementById('challengeDuration').value);
+    const count     = parseInt(document.getElementById('challengeHabitCount').value) || 1;
+    const unit      = document.getElementById('challengeHabitUnit').value;
+    const icon      = challengeIconValue || '⭐';
 
-    if (!habitId || !friendId) {
-        alert('Выберите привычку и друга');
+    if (!name) {
+        nameInput.style.borderColor = '#FF6584';
+        setTimeout(() => nameInput.style.borderColor = 'var(--border)', 1500);
+        return;
+    }
+    if (!friendId) {
+        alert('Выберите друга');
         return;
     }
 
-    const habit     = habits.find(h => h.id === habitId);
     const friend    = friends.find(f => String(f.id) === String(friendId));
     const startDate = new Date().toISOString().split('T')[0];
 
@@ -1056,10 +1089,10 @@ async function saveChallenge() {
                 fromUserName: currentUser.first_name,
                 toUserId:     friend.id,
                 toUsername:   friend.username,
-                habitName:    habit.name,
-                habitIcon:    habit.icon,
-                habitCount:   habit.count,
-                habitUnit:    habit.unit,
+                habitName:    name,
+                habitIcon:    icon,
+                habitCount:   count,
+                habitUnit:    unit,
                 duration,
                 startDate
             })
@@ -1067,13 +1100,33 @@ async function saveChallenge() {
 
         if (res.ok) {
             const data = await res.json();
+
+            // Создаём привычку для себя (с fromChallenge: true)
+            const myHabitId = `challenge_${data.challengeId}`;
+            const myHabit = {
+                id:            myHabitId,
+                name,
+                icon,
+                count,
+                unit,
+                days:          [],
+                dayMode:       'weekday',
+                reminder:      false,
+                startDate,
+                challengeId:   data.challengeId,
+                fromChallenge: true
+            };
+            habits.push(myHabit);
+            lsSet('habits', habits);
+
+            // Сохраняем вызов локально
             const challenge = {
                 id:             data.challengeId,
-                habitId,
-                habitName:      habit.name,
-                habitIcon:      habit.icon,
-                habitCount:     habit.count,
-                habitUnit:      habit.unit,
+                habitId:        myHabitId,
+                habitName:      name,
+                habitIcon:      icon,
+                habitCount:     count,
+                habitUnit:      unit,
                 friendId:       friend.id,
                 friendName:     friend.firstName || friend.username,
                 friendUsername: friend.username,
@@ -1086,8 +1139,10 @@ async function saveChallenge() {
             };
             challenges.push(challenge);
             lsSet('challenges', challenges);
+
             closeChallengeModal();
             renderChallenges();
+            syncWithServer();
             alert(`Вызов отправлен @${friend.username}! 🏆`);
         }
     } catch(e) {
@@ -1159,36 +1214,94 @@ function renderChallenges() {
         return;
     }
     container.innerHTML = active.map(c => {
+        // Прогресс: сколько дней выполнено за всё время
         const myDone   = c.habitId ? getChallengeProgress(c) : (c.myProgress || 0);
         const frDone   = c.friendProgress || 0;
         const daysLeft = getDaysLeft(c);
-        const myPct    = Math.min(100, Math.round((myDone / c.duration) * 100));
-        const frPct    = Math.min(100, Math.round((frDone / c.duration) * 100));
-        const isWin    = myPct >= frPct;
+        const daysPassed = c.duration - daysLeft;
+
+        // Прогресс сегодня
+        const todayKey  = dateKey(new Date());
+        const todayDone = c.habitId
+            ? ((progress[todayKey] || {})[c.habitId] || 0)
+            : 0;
+        const todayTotal = c.habitCount || 1;
+        const todayPct   = Math.min(100, Math.round((todayDone / todayTotal) * 100));
+
+        // Общий прогресс (дней выполнено / всего дней)
+        const myPct  = Math.min(100, Math.round((myDone  / c.duration) * 100));
+        const frPct  = Math.min(100, Math.round((frDone  / c.duration) * 100));
+        const isWin  = myPct >= frPct;
+
+        // Streak (текущая серия)
+        let streak = 0;
+        if (c.habitId) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            for (let i = 0; i < daysPassed; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const k = dateKey(d);
+                const done = ((progress[k] || {})[c.habitId] || 0);
+                if (done >= (c.habitCount || 1)) streak++;
+                else break;
+            }
+        }
+
         return `
         <div class="challenge-card">
             <div class="challenge-header">
-                <span class="challenge-icon">${c.habitIcon}</span>
+                <span class="challenge-icon">${c.habitIcon || '⭐'}</span>
                 <div class="challenge-info">
                     <div class="challenge-name">${c.habitName}</div>
-                    <div class="challenge-meta">vs @${c.friendUsername} · ${daysLeft} дн. осталось</div>
+                    <div class="challenge-meta">⚡ vs @${c.friendUsername} · ${daysLeft} дн. осталось</div>
                 </div>
                 <button class="challenge-delete-btn" onclick="deleteChallenge('${c.id}')">×</button>
             </div>
-            <div class="challenge-scores">
+
+            <!-- Сегодня -->
+            <div class="challenge-today-block">
+                <div class="challenge-today-label">📅 Сегодня: ${todayDone} / ${todayTotal} ${c.habitUnit || 'раз'}</div>
+                <div class="progress-bar-wrap" style="margin-top:4px;">
+                    <div class="progress-bar-fill" style="width:${todayPct}%;${todayPct>=100?'background:var(--success)':''}"></div>
+                </div>
+            </div>
+
+            <!-- Общий счёт -->
+            <div class="challenge-scores" style="margin-top:10px;">
                 <div class="score-row">
                     <span class="score-label">Ты ${isWin ? '👑' : ''}</span>
                     <div class="score-bar-wrap">
                         <div class="score-bar-fill mine" style="width:${myPct}%"></div>
                     </div>
-                    <span class="score-num">${myDone}/${c.duration}</span>
+                    <span class="score-num">${myDone}/${c.duration} дн.</span>
                 </div>
                 <div class="score-row">
                     <span class="score-label">@${c.friendUsername}</span>
-                                        <div class="score-bar-wrap">
+                    <div class="score-bar-wrap">
                         <div class="score-bar-fill friend" style="width:${frPct}%"></div>
                     </div>
-                    <span class="score-num">${frDone}/${c.duration}</span>
+                    <span class="score-num">${frDone}/${c.duration} дн.</span>
+                </div>
+            </div>
+
+            <!-- Доп статистика -->
+            <div class="challenge-stats-row">
+                <div class="challenge-stat-item">
+                    <span class="challenge-stat-num">${daysPassed}</span>
+                    <span class="challenge-stat-label">дней прошло</span>
+                </div>
+                <div class="challenge-stat-item">
+                    <span class="challenge-stat-num">${daysLeft}</span>
+                    <span class="challenge-stat-label">осталось</span>
+                </div>
+                <div class="challenge-stat-item">
+                    <span class="challenge-stat-num">${streak}🔥</span>
+                    <span class="challenge-stat-label">серия</span>
+                </div>
+                <div class="challenge-stat-item">
+                    <span class="challenge-stat-num">${myDone > 0 ? Math.round((myDone/Math.max(daysPassed,1))*100) : 0}%</span>
+                    <span class="challenge-stat-label">выполнение</span>
                 </div>
             </div>
         </div>`;
@@ -1222,17 +1335,58 @@ function renderChallengeHabits() {
     const todayProgress = progress[key] || {};
 
     // Только привычки из вызовов
-    const challengeHabits = habits.filter(h => h.fromChallenge || h.challengeId);
+    const challengeHabits = habits.filter(h => h.fromChallenge === true);
 
     if (challengeHabits.length === 0) {
         list.innerHTML = `
             <div class="empty-msg">
                 <span class="empty-icon">⚡</span>
                 <span>Нет активных вызовов</span>
-                <span style="font-size:12px;margin-top:4px;">Создайте вызов с другом в разделе "Друзья"</span>
+                <span style="font-size:12px;margin-top:4px;">Создайте вызов в разделе "Друзья"</span>
             </div>`;
         return;
     }
+
+    list.innerHTML = challengeHabits.map(h => {
+        const done      = todayProgress[h.id] || 0;
+        const total     = h.count || 1;
+        const pct       = Math.min(100, Math.round((done / total) * 100));
+        const completed = done >= total;
+
+        const challenge = challenges.find(c =>
+            c.id === h.challengeId ||
+            c.id === h.id.replace('challenge_', '')
+        );
+        const friendLabel  = challenge ? `vs @${challenge.friendUsername}` : '';
+        const daysLeft     = challenge ? getDaysLeft(challenge) : 0;
+        const myDone       = challenge?.habitId ? getChallengeProgress(challenge) : (challenge?.myProgress || 0);
+        const totalDays    = challenge?.duration || 0;
+        const isWin        = myDone >= (challenge?.friendProgress || 0);
+
+        return `
+        <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${h.id}">
+            <div class="habit-card-inner">
+                <div class="habit-icon-circle">${h.icon || '⭐'}</div>
+                <div class="habit-middle">
+                    <div class="habit-name">${h.name}</div>
+                    <div class="challenge-vs-label">⚡ ${friendLabel} · ${daysLeft} дн. осталось</div>
+                    <div class="habit-sub">сегодня: ${done} / ${total} ${h.unit || 'раз'}</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
+                    </div>
+                    ${challenge ? `
+                    <div style="display:flex;gap:8px;margin-top:4px;">
+                        <span style="font-size:10px;color:var(--primary);font-weight:600;">Ты ${isWin?'👑':''}: ${myDone}/${totalDays} дн.</span>
+                        <span style="font-size:10px;color:var(--accent);font-weight:600;">@${challenge.friendUsername}: ${challenge.friendProgress||0}/${totalDays} дн.</span>
+                    </div>` : ''}
+                </div>
+                <div class="card-btns">
+                    <button class="plus-btn" onclick="addProgressChallenge('${h.id}')">+</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
 
     list.innerHTML = challengeHabits.map(h => {
         const done      = todayProgress[h.id] || 0;
