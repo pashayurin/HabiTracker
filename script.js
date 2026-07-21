@@ -5,15 +5,11 @@ function lsGet(key, fallback) {
         const val = localStorage.getItem(key);
         if (val === null || val === undefined) return JSON.parse(fallback);
         return JSON.parse(val);
-    } catch(e) {
-        return JSON.parse(fallback);
-    }
+    } catch(e) { return JSON.parse(fallback); }
 }
 
 function lsSet(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch(e) {}
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
 }
 
 (function cleanOldUser() {
@@ -25,9 +21,7 @@ function lsSet(key, value) {
                 localStorage.removeItem('tgUser');
             }
         }
-    } catch(e) {
-        localStorage.removeItem('tgUser');
-    }
+    } catch(e) { localStorage.removeItem('tgUser'); }
 })();
 
 const MONTHS      = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
@@ -47,8 +41,8 @@ const ICONS = [
 let habits      = lsGet('habits', '[]');
 let progress    = lsGet('progress', '{}');
 let currentUser = null;
-let friends    = lsGet('friends', '[]');
-let challenges = lsGet('challenges', '[]');
+let friends     = lsGet('friends', '[]');
+let challenges  = lsGet('challenges', '[]');
 let selectedIconValue = '⭐';
 let reminderOn        = false;
 let reminderTime      = '09:00';
@@ -58,9 +52,12 @@ let reminderStart     = '08:00';
 let reminderEnd       = '22:00';
 let allDayReminder    = false;
 let iconPickerOpen    = false;
+let dayMode           = 'weekday';
+let dayIntervalVal    = 2;
 
-let dayMode        = 'weekday';
-let dayIntervalVal = 2;
+let challengeIconValue      = '⭐';
+let challengeIconPickerOpen = false;
+let friendRequests          = [];
 
 let currentDate = new Date();
 currentDate.setHours(0, 0, 0, 0);
@@ -71,13 +68,37 @@ const dateState = {
     year:  new Date().getFullYear()
 };
 
+// =============================================
+// УТИЛИТЫ
+// =============================================
+
 function getUserTimezone() {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Moscow';
-    } catch(e) {
-        return 'Europe/Moscow';
-    }
+    } catch(e) { return 'Europe/Moscow'; }
 }
+
+function dateKey(d) {
+    const y   = d.getFullYear();
+    const m   = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function formatMainDate(d) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const dateStr = d.getDate() + ' ' + MONTHS_FULL[d.getMonth()];
+    if (d.getTime() === today.getTime())     return 'Сегодня, '   + dateStr;
+    if (d.getTime() === yesterday.getTime()) return 'Вчера, '     + dateStr;
+    if (d.getTime() === tomorrow.getTime())  return 'Завтра, '    + dateStr;
+    return DAYS_FULL[d.getDay()] + ', ' + dateStr;
+}
+
+// =============================================
+// TELEGRAM
+// =============================================
 
 function initTelegram() {
     try {
@@ -90,12 +111,7 @@ function initTelegram() {
 
 function tryGetTelegramUser() {
     try {
-        if (
-            window.Telegram &&
-            window.Telegram.WebApp &&
-            window.Telegram.WebApp.initDataUnsafe &&
-            window.Telegram.WebApp.initDataUnsafe.user
-        ) {
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
             const u = window.Telegram.WebApp.initDataUnsafe.user;
             if (u && u.id && u.id !== 0) return u;
         }
@@ -138,6 +154,10 @@ function logout() {
     renderProfile();
 }
 
+// =============================================
+// СЕРВЕР
+// =============================================
+
 async function syncWithServer() {
     if (!currentUser || !currentUser.id) return;
     try {
@@ -166,9 +186,7 @@ async function syncWithServer() {
             renderHabits();
             renderProfile();
         }
-    } catch(e) {
-        console.log('Офлайн режим');
-    }
+    } catch(e) { console.log('Офлайн режим'); }
 }
 
 async function loadFromServer() {
@@ -188,30 +206,20 @@ async function loadFromServer() {
             renderHabits();
             renderProfile();
         }
-    } catch(e) {
-        console.log('Не удалось загрузить с сервера');
-    }
+    } catch(e) { console.log('Не удалось загрузить с сервера'); }
 }
 
-function dateKey(d) {
-    const y   = d.getFullYear();
-    const m   = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
+// =============================================
+// НАВИГАЦИЯ
+// =============================================
 
-function formatMainDate(d) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const dateStr = d.getDate() + ' ' + MONTHS_FULL[d.getMonth()];
-    if (d.getTime() === today.getTime())     return 'Сегодня, ' + dateStr;
-    if (d.getTime() === yesterday.getTime()) return 'Вчера, ' + dateStr;
-    if (d.getTime() === tomorrow.getTime())  return 'Завтра, ' + dateStr;
-    return DAYS_FULL[d.getDay()] + ', ' + dateStr;
+function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    el.classList.add('active');
+    if (name === 'profile') renderProfile();
+    if (name === 'friends') renderFriendsPage();
 }
 
 function renderDateLabel() {
@@ -225,28 +233,30 @@ function changeMainDate(dir) {
     renderHabits();
 }
 
-function showPage(name, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-' + name).classList.add('active');
+function switchHomeTab(tab, el) {
+    document.querySelectorAll('.home-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
-    if (name === 'profile') renderProfile();
-    if (name === 'friends') renderFriendsPage();
+    document.getElementById('homeTabPersonalContent').style.display   = tab === 'personal'   ? 'block' : 'none';
+    document.getElementById('homeTabChallengesContent').style.display = tab === 'challenges' ? 'block' : 'none';
+    if (tab === 'challenges') renderChallengeHabits();
 }
+
+// =============================================
+// ПРИВЫЧКИ
+// =============================================
 
 function isHabitActiveOnDate(habit, date) {
     if (habit.dayMode === 'interval' && habit.dayInterval) {
         const start = habit.startDate ? new Date(habit.startDate) : new Date();
-        start.setHours(0, 0, 0, 0);
+        start.setHours(0,0,0,0);
         const target = new Date(date);
-        target.setHours(0, 0, 0, 0);
+        target.setHours(0,0,0,0);
         const diffDays = Math.round((target - start) / (1000 * 60 * 60 * 24));
         if (diffDays < 0) return false;
         return diffDays % habit.dayInterval === 0;
     }
     if (!habit.days || habit.days.length === 0) return true;
-    const currentDay = DAY_KEYS[date.getDay()];
-    return habit.days.includes(currentDay);
+    return habit.days.includes(DAY_KEYS[date.getDay()]);
 }
 
 function renderHabits() {
@@ -254,14 +264,9 @@ function renderHabits() {
     if (!list) return;
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-
-    // Фильтруем: только НЕ из вызовов и активные сегодня
     const filtered = habits.filter(h =>
-        !h.fromChallenge &&
-        !h.challengeId &&
-        isHabitActiveOnDate(h, currentDate)
+        !h.fromChallenge && !h.challengeId && isHabitActiveOnDate(h, currentDate)
     );
-
     if (filtered.length === 0) {
         list.innerHTML = `
             <div class="empty-msg">
@@ -288,13 +293,14 @@ function renderHabits() {
                     </div>
                 </div>
                 <div class="card-btns">
-                    <button class="plus-btn" onclick="addProgress('${h.id}')">+</button>
-                    <button class="delete-btn" onclick="deleteHabit('${h.id}')">×</button>
+                    <button class="plus-btn"    onclick="addProgress('${h.id}')">+</button>
+                    <button class="delete-btn"  onclick="deleteHabit('${h.id}')">×</button>
                 </div>
             </div>
         </div>`;
     }).join('');
 }
+
 function addProgress(id) {
     const key = dateKey(currentDate);
     if (!progress[key]) progress[key] = {};
@@ -316,6 +322,10 @@ function deleteHabit(id) {
     syncWithServer();
 }
 
+// =============================================
+// МОДАЛКА ДОБАВЛЕНИЯ ПРИВЫЧКИ
+// =============================================
+
 function setDayMode(mode) {
     dayMode = mode;
     document.getElementById('dayModeWeekday').classList.toggle('active', mode === 'weekday');
@@ -334,9 +344,7 @@ function changeDayInterval(dir) {
 
 function syncDayIntervalInput(input) {
     let val = parseInt(input.value);
-    if (!isNaN(val)) {
-        dayIntervalVal = Math.max(2, Math.min(365, val));
-    }
+    if (!isNaN(val)) dayIntervalVal = Math.max(2, Math.min(365, val));
 }
 
 function fixDayIntervalInput(input) {
@@ -347,22 +355,17 @@ function fixDayIntervalInput(input) {
     input.value = val;
 }
 
-function toggleDay(btn) {
-    btn.classList.toggle('active');
-}
+function toggleDay(btn) { btn.classList.toggle('active'); }
 
 function toggleAllDays(btn) {
     const dayBtns   = document.querySelectorAll('.day-circle');
     const allActive = [...dayBtns].every(b => b.classList.contains('active'));
-    dayBtns.forEach(b => {
-        if (allActive) b.classList.remove('active');
-        else b.classList.add('active');
-    });
+    dayBtns.forEach(b => allActive ? b.classList.remove('active') : b.classList.add('active'));
     btn.textContent = allActive ? 'Выбрать все' : 'Снять все';
 }
 
 function openModal() {
-    const now       = new Date();
+    const now = new Date();
     dateState.day   = now.getDate();
     dateState.month = now.getMonth();
     dateState.year  = now.getFullYear();
@@ -375,16 +378,9 @@ function openModal() {
     selectedIconValue = '⭐';
     document.getElementById('selectedIcon').textContent = '⭐';
 
-    reminderOn       = false;
-    reminderTime     = '09:00';
-    reminderType     = 'time';
-    reminderInterval = 2;
-    reminderStart    = '08:00';
-    reminderEnd      = '22:00';
-    allDayReminder   = false;
-
-    dayMode        = 'weekday';
-    dayIntervalVal = 2;
+    reminderOn = false; reminderTime = '09:00'; reminderType = 'time';
+    reminderInterval = 2; reminderStart = '08:00'; reminderEnd = '22:00'; allDayReminder = false;
+    dayMode = 'weekday'; dayIntervalVal = 2;
 
     document.getElementById('dayModeWeekday').classList.add('active');
     document.getElementById('dayModeInterval').classList.remove('active');
@@ -398,7 +394,6 @@ function openModal() {
     document.getElementById('reminderToggle').classList.remove('on');
     document.getElementById('toggleLabel').textContent        = 'нет';
     document.getElementById('reminderTimeWrap').style.display = 'none';
-
     document.getElementById('typeBtnTime').classList.add('active');
     document.getElementById('typeBtnInterval').classList.remove('active');
     document.getElementById('reminderExactTime').style.display    = 'block';
@@ -407,17 +402,14 @@ function openModal() {
     document.getElementById('reminderIntervalInput').value = '2';
     document.getElementById('intervalStartInput').value    = '08:00';
     document.getElementById('intervalEndInput').value      = '22:00';
-
     document.getElementById('allDayToggle').classList.remove('on');
     document.getElementById('allDayLabel').textContent         = 'нет';
     document.getElementById('intervalTimeRange').style.display = 'block';
 
     document.querySelectorAll('.day-circle').forEach(b => b.classList.remove('active'));
-
     iconPickerOpen = false;
     document.getElementById('iconPicker').classList.remove('open');
     document.getElementById('modalOverlay').classList.add('active');
-
     buildIconGrid();
 }
 
@@ -453,7 +445,7 @@ function selectIcon(ic) {
 
 function changeDate(type, dir) {
     if (type === 'day') {
-        const max     = DAYS_IN_MONTH[dateState.month];
+        const max = DAYS_IN_MONTH[dateState.month];
         dateState.day = ((dateState.day - 1 + dir + max) % max) + 1;
     } else if (type === 'month') {
         dateState.month = (dateState.month + 12 + dir) % 12;
@@ -478,9 +470,7 @@ function toggleReminder() {
     document.getElementById('reminderTimeWrap').style.display = reminderOn ? 'block' : 'none';
 }
 
-function setReminderTime(val) {
-    reminderTime = val;
-}
+function setReminderTime(val) { reminderTime = val; }
 
 function setReminderType(type) {
     reminderType = type;
@@ -500,7 +490,6 @@ function toggleAllDay() {
 function saveHabit() {
     const nameInput = document.getElementById('habitName');
     const name      = nameInput.value.trim();
-
     if (!name) {
         nameInput.focus();
         nameInput.style.borderColor = '#FF6584';
@@ -511,34 +500,22 @@ function saveHabit() {
     const count = parseInt(document.getElementById('habitCount').value) || 1;
     const unit  = document.getElementById('habitUnit').value;
     const icon  = selectedIconValue || '⭐';
+    const startDate = `${dateState.year}-${String(dateState.month+1).padStart(2,'0')}-${String(dateState.day).padStart(2,'0')}`;
 
-    const startMonth = String(dateState.month + 1).padStart(2, '0');
-    const startDay   = String(dateState.day).padStart(2, '0');
-    const startDate  = `${dateState.year}-${startMonth}-${startDay}`;
-
-    let activeDays       = [];
-    let habitDayMode     = dayMode;
-    let habitDayInterval = null;
-
+    let activeDays = [], habitDayMode = dayMode, habitDayInterval = null;
     if (dayMode === 'weekday') {
-        activeDays = [...document.querySelectorAll('.day-circle.active')]
-            .map(b => b.getAttribute('data-day'));
+        activeDays = [...document.querySelectorAll('.day-circle.active')].map(b => b.getAttribute('data-day'));
     } else {
-        const inputVal   = parseInt(document.getElementById('dayIntervalValue').value) || 2;
+        const inputVal = parseInt(document.getElementById('dayIntervalValue').value) || 2;
         habitDayInterval = Math.max(2, Math.min(365, inputVal));
-        dayIntervalVal   = habitDayInterval;
+        dayIntervalVal = habitDayInterval;
     }
 
-    let habitReminder         = false;
-    let habitReminderTime     = null;
-    let habitReminderType     = null;
-    let habitReminderInterval = null;
-    let habitReminderStart    = null;
-    let habitReminderEnd      = null;
-    let habitReminderAllDay   = false;
+    let habitReminder = false, habitReminderTime = null, habitReminderType = null;
+    let habitReminderInterval = null, habitReminderStart = null, habitReminderEnd = null, habitReminderAllDay = false;
 
     if (reminderOn) {
-        habitReminder     = true;
+        habitReminder = true;
         habitReminderType = reminderType;
         if (reminderType === 'time') {
             habitReminderTime = document.getElementById('reminderTimeInput').value;
@@ -549,37 +526,28 @@ function saveHabit() {
                 habitReminderStart = document.getElementById('intervalStartInput').value;
                 habitReminderEnd   = document.getElementById('intervalEndInput').value;
             } else {
-                habitReminderStart = '00:00';
-                habitReminderEnd   = '23:59';
+                habitReminderStart = '00:00'; habitReminderEnd = '23:59';
             }
         }
     }
 
-    const habit = {
-        id:               Date.now().toString(),
-        name,
-        icon,
-        count,
-        unit,
-        dayMode:          habitDayMode,
-        dayInterval:      habitDayInterval,
-        reminder:         habitReminder,
-        reminderType:     habitReminderType,
-        reminderTime:     habitReminderTime,
-        reminderInterval: habitReminderInterval,
-        reminderAllDay:   habitReminderAllDay,
-        reminderStart:    habitReminderStart,
-        reminderEnd:      habitReminderEnd,
-        days:             activeDays,
-        startDate
-    };
-
-    habits.push(habit);
+    habits.push({
+        id: Date.now().toString(), name, icon, count, unit,
+        dayMode: habitDayMode, dayInterval: habitDayInterval,
+        reminder: habitReminder, reminderType: habitReminderType, reminderTime: habitReminderTime,
+        reminderInterval: habitReminderInterval, reminderAllDay: habitReminderAllDay,
+        reminderStart: habitReminderStart, reminderEnd: habitReminderEnd,
+        days: activeDays, startDate
+    });
     lsSet('habits', habits);
     closeModal();
     renderHabits();
     syncWithServer();
 }
+
+// =============================================
+// ПРОФИЛЬ
+// =============================================
 
 function renderProfile() {
     const guestEl  = document.getElementById('profileGuest');
@@ -589,16 +557,11 @@ function renderProfile() {
     if (currentUser && currentUser.id && currentUser.id !== 0) {
         guestEl.style.display = 'none';
         userEl.style.display  = 'flex';
-
         const firstName = currentUser.first_name || '';
         const lastName  = currentUser.last_name  || '';
-        const fullName  = (firstName + ' ' + lastName).trim();
-
-        document.getElementById('profileName').textContent = fullName || 'Пользователь';
-
+        document.getElementById('profileName').textContent = (firstName + ' ' + lastName).trim() || 'Пользователь';
         const usernameEl = document.getElementById('profileUsername');
         usernameEl.textContent = currentUser.username ? '@' + currentUser.username : '';
-
         const tzLabel = document.getElementById('timezoneLabel');
         if (tzLabel) tzLabel.textContent = getUserTimezone();
 
@@ -606,28 +569,16 @@ function renderProfile() {
             avatarEl.innerHTML = `<img src="${currentUser.photo_url}" alt="avatar">`;
         } else {
             const letter = (firstName || 'П')[0].toUpperCase();
-            avatarEl.innerHTML = `
-                <div style="
-                    width:100%;height:100%;
-                    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-                    color:#fff;
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:40px;font-weight:700;border-radius:50%;
-                ">${letter}</div>`;
+            avatarEl.innerHTML = `<div style="width:100%;height:100%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;border-radius:50%;">${letter}</div>`;
         }
 
         const todayKey  = dateKey(new Date());
         const todayProg = progress[todayKey] || {};
         let doneToday   = 0;
-        habits.forEach(h => {
-            if ((todayProg[h.id] || 0) >= h.count) doneToday++;
-        });
-
+        habits.forEach(h => { if ((todayProg[h.id] || 0) >= h.count) doneToday++; });
         document.getElementById('statTotal').textContent = habits.length;
         document.getElementById('statDone').textContent  = doneToday;
-
         renderNotificationSettings();
-
     } else {
         guestEl.style.display = 'flex';
         userEl.style.display  = 'none';
@@ -639,48 +590,18 @@ function renderProfile() {
 function renderNotificationSettings() {
     const container = document.getElementById('notificationSettings');
     if (!container) return;
-
     const habitsWithReminder = habits.filter(h => h.reminder);
-
     if (habitsWithReminder.length === 0) {
-        container.innerHTML = `
-            <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:8px 0;">
-                Нет активных напоминаний.<br>
-                Добавьте привычку с напоминанием.
-            </div>`;
+        container.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:8px 0;">Нет активных напоминаний.<br>Добавьте привычку с напоминанием.</div>`;
         return;
     }
-
     container.innerHTML = habitsWithReminder.map(h => {
-        let reminderInfo = '';
-        if (h.reminderType === 'interval') {
-            if (h.reminderAllDay) {
-                reminderInfo = `🔁 каждые ${h.reminderInterval} ч (весь день)`;
-            } else {
-                reminderInfo = `🔁 каждые ${h.reminderInterval} ч (${h.reminderStart}–${h.reminderEnd})`;
-            }
-        } else {
-            reminderInfo = `⏰ ${h.reminderTime}`;
-        }
-
-        let daysInfo = '';
-        if (h.dayMode === 'interval') {
-            daysInfo = `каждые ${h.dayInterval} дн.`;
-        } else if (h.days && h.days.length > 0) {
-            daysInfo = h.days.join(', ');
-        } else {
-            daysInfo = 'каждый день';
-        }
-
-        return `
-        <div style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            padding:8px 0;
-            border-bottom:1px solid var(--border);
-            gap:8px;
-        ">
+        let reminderInfo = h.reminderType === 'interval'
+            ? (h.reminderAllDay ? `🔁 каждые ${h.reminderInterval} ч (весь день)` : `🔁 каждые ${h.reminderInterval} ч (${h.reminderStart}–${h.reminderEnd})`)
+            : `⏰ ${h.reminderTime}`;
+        let daysInfo = h.dayMode === 'interval' ? `каждые ${h.dayInterval} дн.`
+            : (h.days && h.days.length > 0 ? h.days.join(', ') : 'каждый день');
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;">
             <span style="font-size:13px;">${h.icon} ${h.name}</span>
             <div style="text-align:right;">
                 <div style="color:var(--primary);font-weight:600;font-size:12px;">${reminderInfo}</div>
@@ -689,6 +610,10 @@ function renderNotificationSettings() {
         </div>`;
     }).join('');
 }
+
+// =============================================
+// ИНИЦИАЛИЗАЦИЯ
+// =============================================
 
 document.addEventListener('DOMContentLoaded', function() {
     initTelegram();
@@ -706,11 +631,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5 * 60 * 1000);
     }, 300);
 });
-// =============================================
-// ===== ДРУЗЬЯ =====
-// =============================================
 
-let friendRequests = []; // входящие заявки
+// =============================================
+// ДРУЗЬЯ
+// =============================================
 
 function switchFriendsTab(tab, el) {
     document.querySelectorAll('.friends-tab').forEach(t => t.classList.remove('active'));
@@ -722,13 +646,11 @@ function switchFriendsTab(tab, el) {
 
 async function renderFriendsPage() {
     await loadFriendRequests();
-    await loadAcceptedRequests(); // ← новое
+    await loadAcceptedRequests();
     await loadChallengesFromServer();
     renderFriendsList();
     renderChallenges();
 }
-
-// ===== ЗАЯВКИ В ДРУЗЬЯ =====
 
 async function loadFriendRequests() {
     if (!currentUser || !currentUser.id) return;
@@ -739,11 +661,9 @@ async function loadFriendRequests() {
             friendRequests = data.requests || [];
             renderFriendRequests();
         }
-    } catch(e) {
-        console.log('Не удалось загрузить заявки');
-    }
+    } catch(e) { console.log('Не удалось загрузить заявки'); }
 }
-// Проверяем — кто принял нашу заявку
+
 async function loadAcceptedRequests() {
     if (!currentUser || !currentUser.id) return;
     try {
@@ -752,10 +672,8 @@ async function loadAcceptedRequests() {
             const data = await res.json();
             if (data.requests && data.requests.length > 0) {
                 data.requests.forEach(r => {
-                    // toUser принял нашу заявку — добавляем его себе в друзья
                     const toUserId = r.toUserId;
                     if (!friends.find(f => String(f.id) === String(toUserId))) {
-                        // Нужно получить данные принявшего пользователя
                         fetch(`${SERVER_URL}/api/user/${toUserId}`)
                             .then(res => res.json())
                             .then(userData => {
@@ -775,15 +693,12 @@ async function loadAcceptedRequests() {
                 });
             }
         }
-    } catch(e) {
-        console.log('Не удалось загрузить принятые заявки');
-    }
+    } catch(e) { console.log('Не удалось загрузить принятые заявки'); }
 }
 
 function renderFriendRequests() {
-    // Рендерим в отдельную вкладку
-    const list2  = document.getElementById('friendRequestsList2');
-    const badge  = document.getElementById('requestsBadge');
+    const list2 = document.getElementById('friendRequestsList2');
+    const badge = document.getElementById('requestsBadge');
 
     if (badge) {
         if (friendRequests.length > 0) {
@@ -828,9 +743,7 @@ async function respondToRequest(requestId, action, fromUserId, fromUserName, fro
         if (res.ok) {
             const data = await res.json();
             friendRequests = friendRequests.filter(r => r._id !== requestId);
-
             if (action === 'accept' && data.newFriendForAcceptor) {
-                // Добавляем отправителя заявки к себе в друзья
                 if (!friends.find(f => String(f.id) === String(data.newFriendForAcceptor.id))) {
                     friends.push({
                         id:        data.newFriendForAcceptor.id,
@@ -844,12 +757,8 @@ async function respondToRequest(requestId, action, fromUserId, fromUserName, fro
             renderFriendRequests();
             renderFriendsList();
         }
-    } catch(e) {
-        alert('Ошибка. Попробуйте позже');
-    }
+    } catch(e) { alert('Ошибка. Попробуйте позже'); }
 }
-
-// ===== ДОБАВИТЬ ДРУГА =====
 
 async function addFriend() {
     const input    = document.getElementById('friendUsernameInput');
@@ -872,7 +781,6 @@ async function addFriend() {
         if (res.ok) {
             const data = await res.json();
             if (data.found) {
-                // Отправляем заявку в друзья
                 const reqRes = await fetch(`${SERVER_URL}/api/friends/request`, {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -891,9 +799,7 @@ async function addFriend() {
         } else {
             alert('Ошибка поиска. Попробуйте позже');
         }
-    } catch(e) {
-        alert('Нет соединения с сервером');
-    }
+    } catch(e) { alert('Нет соединения с сервером'); }
 }
 
 function removeFriend(friendId) {
@@ -927,7 +833,7 @@ function renderFriendsList() {
 }
 
 // =============================================
-// ===== ВЫЗОВЫ =====
+// ВЫЗОВЫ
 // =============================================
 
 async function loadChallengesFromServer() {
@@ -940,9 +846,7 @@ async function loadChallengesFromServer() {
                 data.challenges.forEach(sc => {
                     const existing = challenges.find(c => c.id === sc.challengeId);
                     const iAmFrom  = String(sc.fromUserId) === String(currentUser.id);
-
                     if (!existing) {
-                        // Новый вызов с сервера — добавляем локально
                         const newChallenge = {
                             id:             sc.challengeId,
                             habitName:      sc.habitName,
@@ -950,8 +854,8 @@ async function loadChallengesFromServer() {
                             habitCount:     sc.habitCount || 1,
                             habitUnit:      sc.habitUnit  || 'раз',
                             friendId:       iAmFrom ? sc.toUserId    : sc.fromUserId,
-                            friendUsername: iAmFrom ? sc.toUsername   : (sc.fromUsername || ''),
-                            friendName:     iAmFrom ? sc.toUsername   : sc.fromUserName,
+                            friendUsername: iAmFrom ? sc.toUsername  : (sc.fromUsername || ''),
+                            friendName:     iAmFrom ? sc.toUsername  : sc.fromUserName,
                             duration:       sc.duration,
                             startDate:      sc.startDate,
                             status:         sc.status,
@@ -961,34 +865,30 @@ async function loadChallengesFromServer() {
                             fromServer: true
                         };
                         challenges.push(newChallenge);
-
-                        // ✅ Если это НЕ я создавал — создаём привычку автоматически
                         if (!iAmFrom) {
                             const habitExists = habits.find(h =>
                                 h.name === sc.habitName && h.challengeId === sc.challengeId
                             );
                             if (!habitExists) {
-                                const newHabit = {
-                                    id:          `challenge_${sc.challengeId}`,
-                                    name:        sc.habitName,
-                                    icon:        sc.habitIcon,
-                                    count:       sc.habitCount || 1,
-                                    unit:        sc.habitUnit  || 'раз',
-                                    days:        [],
-                                    dayMode:     'weekday',
-                                    reminder:    false,
-                                    startDate:   sc.startDate,
-                                    challengeId: sc.challengeId,
+                                habits.push({
+                                    id:            `challenge_${sc.challengeId}`,
+                                    name:          sc.habitName,
+                                    icon:          sc.habitIcon,
+                                    count:         sc.habitCount || 1,
+                                    unit:          sc.habitUnit  || 'раз',
+                                    days:          [],
+                                    dayMode:       'weekday',
+                                    reminder:      false,
+                                    startDate:     sc.startDate,
+                                    challengeId:   sc.challengeId,
                                     fromChallenge: true
-                                };
-                                habits.push(newHabit);
+                                });
                                 lsSet('habits', habits);
                                 renderHabits();
                                 syncWithServer();
                             }
                         }
                     } else {
-                        // Обновляем прогресс
                         existing.friendProgress = iAmFrom ? sc.toProgress   : sc.fromProgress;
                         existing.myProgress     = iAmFrom ? sc.fromProgress : sc.toProgress;
                     }
@@ -996,19 +896,10 @@ async function loadChallengesFromServer() {
                 lsSet('challenges', challenges);
             }
         }
-    } catch(e) {
-        console.log('Не удалось загрузить вызовы');
-    }
+    } catch(e) { console.log('Не удалось загрузить вызовы'); }
 }
 
-let challengeIconValue     = '⭐';
-let challengeIconPickerOpen = false;
-
 function openChallengeModal() {
-    console.log('openChallengeModal вызван');
-    console.log('currentUser:', currentUser);
-    console.log('friends:', friends);
-
     if (!currentUser || !currentUser.id) {
         alert('Войдите через Telegram чтобы создавать вызовы');
         return;
@@ -1018,7 +909,6 @@ function openChallengeModal() {
         return;
     }
 
-    // Сброс полей
     challengeIconValue = '⭐';
     document.getElementById('challengeSelectedIcon').textContent = '⭐';
     document.getElementById('challengeHabitName').value  = '';
@@ -1027,12 +917,10 @@ function openChallengeModal() {
     document.getElementById('challengeIconPicker').classList.remove('open');
     challengeIconPickerOpen = false;
 
-    // Заполняем друзей
     const friendSel = document.getElementById('challengeFriendSelect');
     friendSel.innerHTML = '<option value="">выберите...</option>' +
         friends.map(f => `<option value="${f.id}">@${f.username}</option>`).join('');
 
-    // Строим сетку иконок
     const grid = document.getElementById('challengeIconGrid');
     grid.innerHTML = ICONS.map(ic =>
         `<button class="icon-option" onclick="selectChallengeIcon('${ic}')">${ic}</button>`
@@ -1076,10 +964,7 @@ async function saveChallenge() {
         setTimeout(() => nameInput.style.borderColor = 'var(--border)', 1500);
         return;
     }
-    if (!friendId) {
-        alert('Выберите друга');
-        return;
-    }
+    if (!friendId) { alert('Выберите друга'); return; }
 
     const friend    = friends.find(f => String(f.id) === String(friendId));
     const startDate = new Date().toISOString().split('T')[0];
@@ -1101,30 +986,22 @@ async function saveChallenge() {
                 startDate
             })
         });
-
         if (res.ok) {
             const data = await res.json();
-
-            // Создаём привычку для себя (с fromChallenge: true)
             const myHabitId = `challenge_${data.challengeId}`;
-            const myHabit = {
+            habits.push({
                 id:            myHabitId,
-                name,
-                icon,
-                count,
-                unit,
+                name, icon, count, unit,
                 days:          [],
                 dayMode:       'weekday',
                 reminder:      false,
                 startDate,
                 challengeId:   data.challengeId,
                 fromChallenge: true
-            };
-            habits.push(myHabit);
+            });
             lsSet('habits', habits);
 
-            // Сохраняем вызов локально
-            const challenge = {
+            challenges.push({
                 id:             data.challengeId,
                 habitId:        myHabitId,
                 habitName:      name,
@@ -1140,8 +1017,7 @@ async function saveChallenge() {
                 myProgress:     0,
                 friendProgress: 0,
                 iAmFrom:        true
-            };
-            challenges.push(challenge);
+            });
             lsSet('challenges', challenges);
 
             closeChallengeModal();
@@ -1149,16 +1025,13 @@ async function saveChallenge() {
             syncWithServer();
             alert(`Вызов отправлен @${friend.username}! 🏆`);
         }
-    } catch(e) {
-        alert('Ошибка создания вызова');
-    }
+    } catch(e) { alert('Ошибка создания вызова'); }
 }
 
 function getChallengeProgress(challenge) {
     if (!challenge.habitId) return challenge.myProgress || 0;
     const start = new Date(challenge.startDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0,0,0,0);
     let myDone = 0;
     for (let i = 0; i < challenge.duration; i++) {
         const d = new Date(start);
@@ -1176,8 +1049,7 @@ function getDaysLeft(challenge) {
     const start = new Date(challenge.startDate);
     const end   = new Date(start);
     end.setDate(start.getDate() + challenge.duration);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0,0,0,0);
     return Math.max(0, Math.ceil((end - today) / (1000 * 60 * 60 * 24)));
 }
 
@@ -1218,34 +1090,25 @@ function renderChallenges() {
         return;
     }
     container.innerHTML = active.map(c => {
-        // Прогресс: сколько дней выполнено за всё время
-        const myDone   = c.habitId ? getChallengeProgress(c) : (c.myProgress || 0);
-        const frDone   = c.friendProgress || 0;
-        const daysLeft = getDaysLeft(c);
+        const myDone     = c.habitId ? getChallengeProgress(c) : (c.myProgress || 0);
+        const frDone     = c.friendProgress || 0;
+        const daysLeft   = getDaysLeft(c);
         const daysPassed = c.duration - daysLeft;
-
-        // Прогресс сегодня
-        const todayKey  = dateKey(new Date());
-        const todayDone = c.habitId
-            ? ((progress[todayKey] || {})[c.habitId] || 0)
-            : 0;
+        const todayKey   = dateKey(new Date());
+        const todayDone  = c.habitId ? ((progress[todayKey] || {})[c.habitId] || 0) : 0;
         const todayTotal = c.habitCount || 1;
         const todayPct   = Math.min(100, Math.round((todayDone / todayTotal) * 100));
+        const myPct      = Math.min(100, Math.round((myDone / c.duration) * 100));
+        const frPct      = Math.min(100, Math.round((frDone / c.duration) * 100));
+        const isWin      = myPct >= frPct;
 
-        // Общий прогресс (дней выполнено / всего дней)
-        const myPct  = Math.min(100, Math.round((myDone  / c.duration) * 100));
-        const frPct  = Math.min(100, Math.round((frDone  / c.duration) * 100));
-        const isWin  = myPct >= frPct;
-
-        // Streak (текущая серия)
         let streak = 0;
         if (c.habitId) {
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
             for (let i = 0; i < daysPassed; i++) {
                 const d = new Date(today);
                 d.setDate(today.getDate() - i);
-                const k = dateKey(d);
+                const k    = dateKey(d);
                 const done = ((progress[k] || {})[c.habitId] || 0);
                 if (done >= (c.habitCount || 1)) streak++;
                 else break;
@@ -1262,34 +1125,24 @@ function renderChallenges() {
                 </div>
                 <button class="challenge-delete-btn" onclick="deleteChallenge('${c.id}')">×</button>
             </div>
-
-            <!-- Сегодня -->
             <div class="challenge-today-block">
                 <div class="challenge-today-label">📅 Сегодня: ${todayDone} / ${todayTotal} ${c.habitUnit || 'раз'}</div>
                 <div class="progress-bar-wrap" style="margin-top:4px;">
                     <div class="progress-bar-fill" style="width:${todayPct}%;${todayPct>=100?'background:var(--success)':''}"></div>
                 </div>
             </div>
-
-            <!-- Общий счёт -->
             <div class="challenge-scores" style="margin-top:10px;">
                 <div class="score-row">
                     <span class="score-label">Ты ${isWin ? '👑' : ''}</span>
-                    <div class="score-bar-wrap">
-                        <div class="score-bar-fill mine" style="width:${myPct}%"></div>
-                    </div>
+                    <div class="score-bar-wrap"><div class="score-bar-fill mine" style="width:${myPct}%"></div></div>
                     <span class="score-num">${myDone}/${c.duration} дн.</span>
                 </div>
                 <div class="score-row">
                     <span class="score-label">@${c.friendUsername}</span>
-                    <div class="score-bar-wrap">
-                        <div class="score-bar-fill friend" style="width:${frPct}%"></div>
-                    </div>
+                    <div class="score-bar-wrap"><div class="score-bar-fill friend" style="width:${frPct}%"></div></div>
                     <span class="score-num">${frDone}/${c.duration} дн.</span>
                 </div>
             </div>
-
-            <!-- Доп статистика -->
             <div class="challenge-stats-row">
                 <div class="challenge-stat-item">
                     <span class="challenge-stat-num">${daysPassed}</span>
@@ -1324,21 +1177,12 @@ async function deleteChallenge(id) {
         });
     } catch(e) {}
 }
-function switchHomeTab(tab, el) {
-    document.querySelectorAll('.home-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('homeTabPersonalContent').style.display   = tab === 'personal'   ? 'block' : 'none';
-    document.getElementById('homeTabChallengesContent').style.display = tab === 'challenges' ? 'block' : 'none';
-    if (tab === 'challenges') renderChallengeHabits();
-}
+
 function renderChallengeHabits() {
     const list = document.getElementById('challengeHabitsList');
     if (!list) return;
-
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-
-    // Только привычки из вызовов
     const challengeHabits = habits.filter(h => h.fromChallenge === true);
 
     if (challengeHabits.length === 0) {
@@ -1356,16 +1200,14 @@ function renderChallengeHabits() {
         const total     = h.count || 1;
         const pct       = Math.min(100, Math.round((done / total) * 100));
         const completed = done >= total;
-
         const challenge = challenges.find(c =>
-            c.id === h.challengeId ||
-            c.id === h.id.replace('challenge_', '')
+            c.id === h.challengeId || c.id === h.id.replace('challenge_', '')
         );
-        const friendLabel  = challenge ? `vs @${challenge.friendUsername}` : '';
-        const daysLeft     = challenge ? getDaysLeft(challenge) : 0;
-        const myDone       = challenge?.habitId ? getChallengeProgress(challenge) : (challenge?.myProgress || 0);
-        const totalDays    = challenge?.duration || 0;
-        const isWin        = myDone >= (challenge?.friendProgress || 0);
+        const friendLabel = challenge ? `vs @${challenge.friendUsername}` : '';
+        const daysLeft    = challenge ? getDaysLeft(challenge) : 0;
+        const myDone      = challenge?.habitId ? getChallengeProgress(challenge) : (challenge?.myProgress || 0);
+        const totalDays   = challenge?.duration || 0;
+        const isWin       = myDone >= (challenge?.friendProgress || 0);
 
         return `
         <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${h.id}">
@@ -1392,39 +1234,8 @@ function renderChallengeHabits() {
     }).join('');
 }
 
-    list.innerHTML = challengeHabits.map(h => {
-        const done      = todayProgress[h.id] || 0;
-        const total     = h.count || 1;
-        const pct       = Math.min(100, Math.round((done / total) * 100));
-        const completed = done >= total;
-
-        const challenge = challenges.find(c =>
-            c.id === h.challengeId ||
-            c.id === h.id.replace('challenge_', '')
-        );
-        const friendName = challenge ? `vs @${challenge.friendUsername}` : '';
-
-        return `
-        <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${h.id}">
-            <div class="habit-card-inner">
-                <div class="habit-icon-circle">${h.icon || '⭐'}</div>
-                <div class="habit-middle">
-                    <div class="habit-name">${h.name}</div>
-                    <div class="challenge-vs-label">${friendName}</div>
-                    <div class="habit-sub">${done} / ${total} ${h.unit || 'раз'}</div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
-                    </div>
-                </div>
-                <div class="card-btns">
-                    <button class="plus-btn" onclick="addProgressChallenge('${h.id}')">+</button>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
 async function addProgressChallenge(habitId) {
-    const key   = dateKey(currentDate);
+    const key = dateKey(currentDate);
     if (!progress[key]) progress[key] = {};
     const habit = habits.find(h => h.id === habitId);
     if (!habit) return;
@@ -1437,4 +1248,3 @@ async function addProgressChallenge(habitId) {
         await syncWithServer();
     }
 }
-
