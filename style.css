@@ -1283,3 +1283,43 @@ body {
     font-size: 11px;
     margin-bottom: 2px;
 }
+/* ===== СТАТИСТИКА ВЫЗОВА ===== */
+.challenge-today-block {
+    background: var(--primary-light);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-top: 4px;
+}
+.challenge-today-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+}
+.challenge-stats-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+}
+.challenge-stat-item {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.challenge-stat-num {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+.challenge-stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.2;
+}
