@@ -1181,62 +1181,6 @@ async function deleteChallenge(id) {
     } catch(e) {}
 }
 
-function renderChallengeHabits() {
-    const list = document.getElementById('challengeHabitsList');
-    if (!list) return;
-    const key           = dateKey(currentDate);
-    const todayProgress = progress[key] || {};
-    const challengeHabits = habits.filter(h => h.fromChallenge === true);
-
-    if (challengeHabits.length === 0) {
-        list.innerHTML = `
-            <div class="empty-msg">
-                <span class="empty-icon">⚡</span>
-                <span>Нет активных вызовов</span>
-                <span style="font-size:12px;margin-top:4px;">Создайте вызов в разделе "Друзья"</span>
-            </div>`;
-        return;
-    }
-
-    list.innerHTML = challengeHabits.map(h => {
-        const done      = todayProgress[h.id] || 0;
-        const total     = h.count || 1;
-        const pct       = Math.min(100, Math.round((done / total) * 100));
-        const completed = done >= total;
-        const challenge = challenges.find(c =>
-            c.id === h.challengeId || c.id === h.id.replace('challenge_', '')
-        );
-        const friendLabel = challenge ? `vs @${challenge.friendUsername}` : '';
-        const daysLeft    = challenge ? getDaysLeft(challenge) : 0;
-        const myDone      = challenge?.habitId ? getChallengeProgress(challenge) : (challenge?.myProgress || 0);
-        const totalDays   = challenge?.duration || 0;
-        const isWin       = myDone >= (challenge?.friendProgress || 0);
-
-        return `
-        <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${h.id}">
-            <div class="habit-card-inner">
-                <div class="habit-icon-circle">${h.icon || '⭐'}</div>
-                <div class="habit-middle">
-                    <div class="habit-name">${h.name}</div>
-                    <div class="challenge-vs-label">⚡ ${friendLabel} · ${daysLeft} дн. осталось</div>
-                    <div class="habit-sub">сегодня: ${done} / ${total} ${h.unit || 'раз'}</div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
-                    </div>
-                    ${challenge ? `
-                    <div style="display:flex;gap:8px;margin-top:4px;">
-                        <span style="font-size:10px;color:var(--primary);font-weight:600;">Ты ${isWin?'👑':''}: ${myDone}/${totalDays} дн.</span>
-                        <span style="font-size:10px;color:var(--accent);font-weight:600;">@${challenge.friendUsername}: ${challenge.friendProgress||0}/${totalDays} дн.</span>
-                    </div>` : ''}
-                </div>
-                <div class="card-btns">
-                    <button class="plus-btn" onclick="addProgressChallenge('${h.id}')">+</button>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
 async function addProgressChallenge(habitId) {
     const key = dateKey(currentDate);
     if (!progress[key]) progress[key] = {};
