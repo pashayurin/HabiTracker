@@ -264,9 +264,12 @@ function renderHabits() {
     if (!list) return;
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
-    const filtered = habits.filter(h =>
-        !h.fromChallenge && !h.challengeId && isHabitActiveOnDate(h, currentDate)
-    );
+    const filtered = habits.filter(h => {
+    if (h.fromChallenge === true) return false;
+    if (h.challengeId) return false;
+    if (String(h.id).startsWith('challenge_')) return false;
+    return isHabitActiveOnDate(h, currentDate);
+});
     if (filtered.length === 0) {
         list.innerHTML = `
             <div class="empty-msg">
