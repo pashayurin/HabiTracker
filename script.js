@@ -131,6 +131,7 @@ function tryAutoLogin() {
         currentUser = saved;
     } else {
         currentUser = null;
+    }
 }
 
 function fakeTelegramLogin() {
