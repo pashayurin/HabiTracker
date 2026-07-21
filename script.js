@@ -1005,6 +1005,10 @@ let challengeIconValue     = '⭐';
 let challengeIconPickerOpen = false;
 
 function openChallengeModal() {
+    console.log('openChallengeModal вызван');
+    console.log('currentUser:', currentUser);
+    console.log('friends:', friends);
+
     if (!currentUser || !currentUser.id) {
         alert('Войдите через Telegram чтобы создавать вызовы');
         return;
