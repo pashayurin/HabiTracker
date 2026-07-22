@@ -1212,13 +1212,15 @@ async function syncChallengeProgress() {
 function renderChallenges() {
     const container = document.getElementById('challengesList');
     if (!container) return;
-    const active = challenges.filter(c => c.status === 'active');
+    const active = challenges.filter(c => c.status === 'active' && c.pending !== true);
     if (active.length === 0) {
+        const allChallenges = challenges.length;
         container.innerHTML = `
             <div class="friends-empty">
                 <span class="empty-icon">🏆</span>
                 <span>Нет активных вызовов</span>
                 <span style="font-size:12px;margin-top:4px;">Создайте вызов с другом!</span>
+                ${allChallenges > 0 ? `<button onclick="clearAllChallenges()" style="margin-top:12px;padding:8px 16px;background:#ff4757;color:#fff;border:none;border-radius:10px;font-size:13px;cursor:pointer;">🗑️ Очистить старые вызовы (${allChallenges})</button>` : ''}
             </div>`;
         return;
     }
@@ -1296,6 +1298,72 @@ function renderChallenges() {
             </div>
         </div>`;
     }).join('');
+}
+
+async function clearAllChallenges() {
+    const confirmed = confirm(`Удалить все старые вызовы? (${challenges.length} шт.)`);
+    if (!confirmed) return;
+
+    const challengeIds = challenges.map(c => c.id);
+    habits = habits.filter(h =>
+        !h.fromChallenge &&
+        !h.challengeId &&
+        !String(h.id).startsWith('challenge_')
+    );
+    lsSet('habits', habits);
+
+    for (const id of challengeIds) {
+        try {
+            await fetch(`${SERVER_URL}/api/challenges/delete`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ challengeId: id })
+            });
+        } catch(e) {}
+    }
+
+    challenges = [];
+    lsSet('challenges', challenges);
+
+    renderChallenges();
+    renderChallengeHabits();
+    renderHabits();
+
+    alert('Готово! Все старые вызовы удалены ✅');
+}
+
+async function clearAllChallenges() {
+    const confirmed = confirm(`Удалить все старые вызовы? (${challenges.length} шт.)`);
+    if (!confirmed) return;
+
+    // Удаляем все привычки связанные с вызовами
+    const challengeIds = challenges.map(c => c.id);
+    habits = habits.filter(h =>
+        !h.fromChallenge &&
+        !h.challengeId &&
+        !String(h.id).startsWith('challenge_')
+    );
+    lsSet('habits', habits);
+
+    // Удаляем с сервера
+    for (const id of challengeIds) {
+        try {
+            await fetch(`${SERVER_URL}/api/challenges/delete`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ challengeId: id })
+            });
+        } catch(e) {}
+    }
+
+    challenges = [];
+    lsSet('challenges', challenges);
+
+    renderChallenges();
+    renderChallengeHabits();
+    renderHabits();
+
+    alert('Готово! Все старые вызовы удалены ✅');
 }
 
 async function deleteChallenge(id) {
