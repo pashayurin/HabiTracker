@@ -1217,3 +1217,162 @@ async function addProgressChallenge(habitId) {
         await syncWithServer();
     }
 }
+// =============================================
+// ВЫЗОВЫ НА ГЛАВНОЙ
+// =============================================
+
+function renderChallengeHabits() {
+    const list = document.getElementById('challengeHabitsList');
+    if (!list) return;
+
+    const key           = dateKey(currentDate);
+    const todayProgress = progress[key] || {};
+
+    const challengeHabits = habits.filter(h =>
+        h.fromChallenge === true ||
+        h.challengeId   !== undefined ||
+        String(h.id).startsWith('challenge_')
+    );
+
+    if (challengeHabits.length === 0) {
+        const activeChallenges = challenges.filter(c => c.status === 'active');
+        if (activeChallenges.length === 0) {
+            list.innerHTML = `
+                <div class="empty-msg">
+                    <span class="empty-icon">⚡</span>
+                    <span>Нет активных вызовов</span>
+                    <span style="font-size:12px;margin-top:4px;">Создайте вызов в разделе "Друзья"</span>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = activeChallenges.map(c => {
+            const habitId   = c.habitId || `challenge_${c.id}`;
+            const done      = todayProgress[habitId] || 0;
+            const total     = c.habitCount || 1;
+            const pct       = Math.min(100, Math.round((done / total) * 100));
+            const completed = done >= total;
+            const daysLeft  = getDaysLeft(c);
+            const myDone    = getChallengeProgressById(c);
+            const frDone    = c.friendProgress || 0;
+            const isWin     = myDone >= frDone;
+            const totalDays = c.duration || 0;
+
+            return `
+            <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${c.id}">
+                <div class="habit-card-inner">
+                    <div class="habit-icon-circle">${c.habitIcon || '⭐'}</div>
+                    <div class="habit-middle">
+                        <div class="habit-name">${c.habitName}</div>
+                        <div class="challenge-vs-label">⚡ vs @${c.friendUsername} · ${daysLeft} дн. осталось</div>
+                        <div class="habit-sub">сегодня: ${done} / ${total} ${c.habitUnit || 'раз'}</div>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:4px;">
+                            <span style="font-size:10px;color:var(--primary);font-weight:600;">Ты ${isWin ? '👑' : ''}: ${myDone}/${totalDays} дн.</span>
+                            <span style="font-size:10px;color:var(--accent);font-weight:600;">@${c.friendUsername}: ${frDone}/${totalDays} дн.</span>
+                        </div>
+                    </div>
+                    <div class="card-btns">
+                        <button class="plus-btn" onclick="addProgressChallengeById('${c.id}', '${habitId}', ${total})">+</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+        return;
+    }
+
+    list.innerHTML = challengeHabits.map(h => {
+        const done      = todayProgress[h.id] || 0;
+        const total     = h.count || 1;
+        const pct       = Math.min(100, Math.round((done / total) * 100));
+        const completed = done >= total;
+        const challenge = challenges.find(c =>
+            c.id === h.challengeId ||
+            c.habitId === h.id ||
+            c.id === String(h.id).replace('challenge_', '')
+        );
+        const friendLabel = challenge ? `vs @${challenge.friendUsername}` : '';
+        const daysLeft    = challenge ? getDaysLeft(challenge) : 0;
+        const myDone      = challenge ? getChallengeProgressById(challenge) : 0;
+        const frDone      = challenge?.friendProgress || 0;
+        const totalDays   = challenge?.duration || 0;
+        const isWin       = myDone >= frDone;
+
+        return `
+        <div class="habit-card ${completed ? 'completed' : ''} challenge-habit-card" id="card-ch-${h.id}">
+            <div class="habit-card-inner">
+                <div class="habit-icon-circle">${h.icon || '⭐'}</div>
+                <div class="habit-middle">
+                    <div class="habit-name">${h.name}</div>
+                    <div class="challenge-vs-label">⚡ ${friendLabel} · ${daysLeft} дн. осталось</div>
+                    <div class="habit-sub">сегодня: ${done} / ${total} ${h.unit || 'раз'}</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" style="width:${pct}%;${completed ? 'background:var(--success)' : ''}"></div>
+                    </div>
+                    ${challenge ? `
+                    <div style="display:flex;gap:8px;margin-top:4px;">
+                        <span style="font-size:10px;color:var(--primary);font-weight:600;">Ты ${isWin ? '👑' : ''}: ${myDone}/${totalDays} дн.</span>
+                        <span style="font-size:10px;color:var(--accent);font-weight:600;">@${challenge.friendUsername}: ${frDone}/${totalDays} дн.</span>
+                    </div>` : ''}
+                </div>
+                <div class="card-btns">
+                    <button class="plus-btn" onclick="addProgressChallenge('${h.id}')">+</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function getChallengeProgressById(challenge) {
+    const habitId = challenge.habitId || `challenge_${challenge.id}`;
+    const hab = habits.find(h => h.id === habitId);
+    if (!hab) return challenge.myProgress || 0;
+
+    const start = new Date(challenge.startDate);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let myDone = 0;
+    for (let i = 0; i < challenge.duration; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        if (d > today) break;
+        const key  = dateKey(d);
+        const prog = (progress[key] || {})[habitId] || 0;
+        if (prog >= (hab.count || 1)) myDone++;
+    }
+    return myDone;
+}
+
+async function addProgressChallengeById(challengeId, habitId, total) {
+    const key = dateKey(currentDate);
+    if (!progress[key]) progress[key] = {};
+
+    const current = progress[key][habitId] || 0;
+    if (current < total) {
+        progress[key][habitId] = current + 1;
+        lsSet('progress', progress);
+
+        const challenge = challenges.find(c => c.id === challengeId);
+        if (challenge && !habits.find(h => h.id === habitId)) {
+            habits.push({
+                id:            habitId,
+                name:          challenge.habitName,
+                icon:          challenge.habitIcon,
+                count:         challenge.habitCount || total,
+                unit:          challenge.habitUnit  || 'раз',
+                days:          [],
+                dayMode:       'weekday',
+                reminder:      false,
+                startDate:     challenge.startDate,
+                challengeId:   challengeId,
+                fromChallenge: true
+            });
+            lsSet('habits', habits);
+        }
+
+        renderChallengeHabits();
+        await syncChallengeProgress();
+        await syncWithServer();
+    }
+}
