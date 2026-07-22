@@ -319,6 +319,9 @@ function addProgress(id) {
 }
 
 function deleteHabit(id) {
+    const confirmed = confirm('Удалить привычку? Это действие нельзя отменить.');
+    if (!confirmed) return;
+
     habits = habits.filter(h => h.id !== id);
     lsSet('habits', habits);
     renderHabits();
@@ -717,23 +720,25 @@ function renderFriendRequests() {
     const list2 = document.getElementById('friendRequestsList2');
     const badge = document.getElementById('requestsBadge');
 
+    // Считаем все входящие: заявки в друзья + входящие вызовы
+    const pendingChallenges = challenges.filter(c => c.pending === true && c.status === 'active');
+    const totalBadge = friendRequests.length + pendingChallenges.length;
+
     if (badge) {
-        if (friendRequests.length > 0) {
+        if (totalBadge > 0) {
             badge.style.display = 'inline';
-            badge.textContent   = friendRequests.length;
+            badge.textContent   = totalBadge;
         } else {
             badge.style.display = 'none';
         }
     }
 
-    const emptyHtml = `
-        <div class="friends-empty">
-            <span class="empty-icon">📩</span>
-            <span>Нет входящих заявок</span>
-        </div>`;
+    let html = '';
 
-    const requestsHtml = friendRequests.length === 0 ? emptyHtml :
-        friendRequests.map(r => `
+    // --- Заявки в друзья ---
+    if (friendRequests.length > 0) {
+        html += `<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:8px 0 6px;padding-left:4px;">👥 ЗАЯВКИ В ДРУЗЬЯ</div>`;
+        html += friendRequests.map(r => `
             <div class="friend-request-card">
                 <div class="friend-avatar">${(r.fromUserName || r.fromUsername || '?')[0].toUpperCase()}</div>
                 <div class="friend-info">
@@ -746,8 +751,105 @@ function renderFriendRequests() {
                 </div>
             </div>
         `).join('');
+    }
 
-    if (list2) list2.innerHTML = requestsHtml;
+    // --- Входящие вызовы ---
+    if (pendingChallenges.length > 0) {
+        html += `<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:14px 0 6px;padding-left:4px;">⚡ ВХОДЯЩИЕ ВЫЗОВЫ</div>`;
+        html += pendingChallenges.map(c => `
+            <div class="friend-request-card" style="border-color:#a78bfa;background:#f5f3ff;">
+                <div class="friend-avatar" style="background:linear-gradient(135deg,var(--accent),#ff4757);">${(c.habitIcon || '⭐')}</div>
+                <div class="friend-info">
+                    <div class="friend-name">${c.habitIcon || '⭐'} ${c.habitName}</div>
+                    <div class="friend-username">от @${c.friendUsername} · ${c.duration} дн.</div>
+                </div>
+                <div class="request-btns">
+                    <button class="req-accept-btn" onclick="acceptChallenge('${c.id}')">✓</button>
+                    <button class="req-decline-btn" onclick="declineChallenge('${c.id}')">✗</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // --- Пусто ---
+    if (friendRequests.length === 0 && pendingChallenges.length === 0) {
+        html = `
+            <div class="friends-empty">
+                <span class="empty-icon">📩</span>
+                <span>Нет входящих заявок</span>
+            </div>`;
+    }
+
+    if (list2) list2.innerHTML = html;
+}
+
+async function acceptChallenge(challengeId) {
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (!challenge) return;
+
+    // Снимаем pending — вызов принят
+    challenge.pending = false;
+    lsSet('challenges', challenges);
+
+    // Создаём привычку если её нет
+    const habitId = `challenge_${challengeId}`;
+    if (!habits.find(h => h.id === habitId)) {
+        habits.push({
+            id:            habitId,
+            name:          challenge.habitName,
+            icon:          challenge.habitIcon,
+            count:         challenge.habitCount || 1,
+            unit:          challenge.habitUnit  || 'раз',
+            days:          [],
+            dayMode:       'weekday',
+            reminder:      false,
+            startDate:     challenge.startDate,
+            challengeId:   challengeId,
+            fromChallenge: true
+        });
+        // Привязываем habitId к вызову
+        challenge.habitId = habitId;
+        lsSet('habits', habits);
+        lsSet('challenges', challenges);
+    }
+
+    renderFriendRequests();
+    renderChallenges();
+    renderChallengeHabits();
+
+    // Уведомляем сервер о принятии
+    try {
+        await fetch(`${SERVER_URL}/api/challenges/accept`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                challengeId,
+                userId: currentUser.id
+            })
+        });
+    } catch(e) {}
+
+    alert(`Вызов принят! 💪 Привычка добавлена в раздел ⚡ Вызовы`);
+}
+
+async function declineChallenge(challengeId) {
+    const confirmed = confirm('Отклонить вызов?');
+    if (!confirmed) return;
+
+    challenges = challenges.filter(c => c.id !== challengeId);
+    lsSet('challenges', challenges);
+
+    renderFriendRequests();
+    renderChallenges();
+    renderChallengeHabits();
+
+    try {
+        await fetch(`${SERVER_URL}/api/challenges/delete`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ challengeId })
+        });
+    } catch(e) {}
 }
 
 async function respondToRequest(requestId, action, fromUserId, fromUserName, fromUsername) {
@@ -871,7 +973,7 @@ async function loadChallengesFromServer() {
                             habitCount:     sc.habitCount || 1,
                             habitUnit:      sc.habitUnit  || 'раз',
                             friendId:       iAmFrom ? sc.toUserId    : sc.fromUserId,
-                            friendUsername: iAmFrom ? sc.toUsername  : (sc.fromUsername || ''),
+                            friendUsername: iAmFrom ? sc.toUsername  : (sc.fromUsername || sc.fromUserName || ''),
                             friendName:     iAmFrom ? sc.toUsername  : sc.fromUserName,
                             duration:       sc.duration,
                             startDate:      sc.startDate,
@@ -879,10 +981,14 @@ async function loadChallengesFromServer() {
                             myProgress:     iAmFrom ? sc.fromProgress : sc.toProgress,
                             friendProgress: iAmFrom ? sc.toProgress   : sc.fromProgress,
                             iAmFrom,
-                            fromServer: true
+                            fromServer:     true,
+                            // Если я получатель — помечаем как pending для показа в Запросах
+                            pending:        !iAmFrom
                         };
                         challenges.push(newChallenge);
-                        if (!iAmFrom) {
+
+                        // Привычку создаём только если вызов принят (не pending)
+                        if (!iAmFrom && !newChallenge.pending) {
                             const habitExists = habits.find(h =>
                                 h.name === sc.habitName && h.challengeId === sc.challengeId
                             );
@@ -901,16 +1007,18 @@ async function loadChallengesFromServer() {
                                     fromChallenge: true
                                 });
                                 lsSet('habits', habits);
-                                renderHabits();
-                                syncWithServer();
                             }
                         }
                     } else {
                         existing.friendProgress = iAmFrom ? sc.toProgress   : sc.fromProgress;
                         existing.myProgress     = iAmFrom ? sc.fromProgress : sc.toProgress;
+                        existing.status         = sc.status;
                     }
                 });
                 lsSet('challenges', challenges);
+                renderChallenges();
+                renderChallengeHabits();
+                renderFriendRequests(); // обновляем вкладку запросов
             }
         }
     } catch(e) { console.log('Не удалось загрузить вызовы'); }
@@ -1191,9 +1299,26 @@ function renderChallenges() {
 }
 
 async function deleteChallenge(id) {
+    const confirmed = confirm('Удалить вызов? Это действие нельзя отменить.');
+    if (!confirmed) return;
+
+    // Удаляем вызов из списка
     challenges = challenges.filter(c => c.id !== id);
     lsSet('challenges', challenges);
+
+    // Удаляем связанную привычку из habits
+    habits = habits.filter(h =>
+        h.challengeId !== id &&
+        h.id !== `challenge_${id}` &&
+        h.id !== id
+    );
+    lsSet('habits', habits);
+
+    // Обновляем обе вкладки
     renderChallenges();
+    renderChallengeHabits();
+    renderHabits();
+
     try {
         await fetch(`${SERVER_URL}/api/challenges/delete`, {
             method:  'POST',
