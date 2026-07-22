@@ -1421,24 +1421,39 @@ function renderChallengeHabits() {
     const key           = dateKey(currentDate);
     const todayProgress = progress[key] || {};
 
-    const challengeHabits = habits.filter(h =>
-        h.fromChallenge === true ||
-        h.challengeId   !== undefined ||
-        String(h.id).startsWith('challenge_')
+    // Только принятые вызовы (не pending)
+    const activeChallenges = challenges.filter(c => 
+        c.status === 'active' && 
+        c.pending !== true &&
+        getDaysLeft(c) > 0
     );
 
-    if (challengeHabits.length === 0) {
-        const activeChallenges = challenges.filter(c => c.status === 'active');
-        if (activeChallenges.length === 0) {
-            list.innerHTML = `
-                <div class="empty-msg">
-                    <span class="empty-icon">⚡</span>
-                    <span>Нет активных вызовов</span>
-                    <span style="font-size:12px;margin-top:4px;">Создайте вызов в разделе "Друзья"</span>
-                </div>`;
-            return;
-        }
+    const challengeHabits = habits.filter(h => {
+        if (!h.fromChallenge && !h.challengeId && !String(h.id).startsWith('challenge_')) return false;
+        const challenge = challenges.find(c =>
+            c.id === h.challengeId ||
+            c.habitId === h.id ||
+            c.id === String(h.id).replace('challenge_', '')
+        );
+        // Скрываем если вызов pending или истёк
+        if (!challenge) return false;
+        if (challenge.pending === true) return false;
+        if (getDaysLeft(challenge) <= 0) return false;
+        return true;
+    });
 
+    if (challengeHabits.length === 0 && activeChallenges.length === 0) {
+        list.innerHTML = `
+            <div class="empty-msg">
+                <span class="empty-icon">⚡</span>
+                <span>Нет активных вызовов</span>
+                <span style="font-size:12px;margin-top:4px;">Создайте вызов в разделе "Друзья"</span>
+            </div>`;
+        return;
+    }
+
+    // Если есть вызовы без привычек
+    if (challengeHabits.length === 0 && activeChallenges.length > 0) {
         list.innerHTML = activeChallenges.map(c => {
             const habitId   = c.habitId || `challenge_${c.id}`;
             const done      = todayProgress[habitId] || 0;
