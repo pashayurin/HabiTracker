@@ -648,14 +648,26 @@ function switchFriendsTab(tab, el) {
 }
 
 async function renderFriendsPage() {
-    await loadFriendRequests();
-    await loadAcceptedRequests();
-    await loadChallengesFromServer();
+    // Сначала показываем то что есть в localStorage — мгновенно
     renderFriendsList();
     renderChallenges();
+    renderFriendRequests();
+
+    if (!currentUser || !currentUser.id) return;
+
+    // Затем грузим всё параллельно
+    try {
+        await Promise.all([
+            loadFriendRequestsQuick(),
+            loadAcceptedRequestsQuick(),
+            loadChallengesFromServer()
+        ]);
+    } catch(e) {
+        console.log('Ошибка загрузки страницы друзей');
+    }
 }
 
-async function loadFriendRequests() {
+async function loadFriendRequestsQuick() {
     if (!currentUser || !currentUser.id) return;
     try {
         const res = await fetch(`${SERVER_URL}/api/friends/requests/${currentUser.id}`);
@@ -664,39 +676,41 @@ async function loadFriendRequests() {
             friendRequests = data.requests || [];
             renderFriendRequests();
         }
-    } catch(e) { console.log('Не удалось загрузить заявки'); }
+    } catch(e) {}
 }
 
-async function loadAcceptedRequests() {
+async function loadAcceptedRequestsQuick() {
     if (!currentUser || !currentUser.id) return;
     try {
         const res = await fetch(`${SERVER_URL}/api/friends/accepted/${currentUser.id}`);
         if (res.ok) {
             const data = await res.json();
             if (data.requests && data.requests.length > 0) {
-                data.requests.forEach(r => {
+                const fetchPromises = data.requests.map(r => {
                     const toUserId = r.toUserId;
-                    if (!friends.find(f => String(f.id) === String(toUserId))) {
-                        fetch(`${SERVER_URL}/api/user/${toUserId}`)
-                            .then(res => res.json())
-                            .then(userData => {
-                                if (userData && userData.telegramId) {
+                    if (friends.find(f => String(f.id) === String(toUserId))) return Promise.resolve();
+                    return fetch(`${SERVER_URL}/api/user/${toUserId}`)
+                        .then(res => res.json())
+                        .then(userData => {
+                            if (userData && userData.telegramId) {
+                                if (!friends.find(f => String(f.id) === String(userData.telegramId))) {
                                     friends.push({
                                         id:        userData.telegramId,
                                         username:  userData.username,
                                         firstName: userData.firstName,
                                         addedAt:   new Date().toISOString()
                                     });
-                                    lsSet('friends', friends);
-                                    renderFriendsList();
                                 }
-                            })
-                            .catch(() => {});
-                    }
+                            }
+                        })
+                        .catch(() => {});
                 });
+                await Promise.all(fetchPromises);
+                lsSet('friends', friends);
+                renderFriendsList();
             }
         }
-    } catch(e) { console.log('Не удалось загрузить принятые заявки'); }
+    } catch(e) {}
 }
 
 function renderFriendRequests() {
@@ -989,9 +1003,11 @@ async function saveChallenge() {
                 startDate
             })
         });
-        if (res.ok) {
+                if (res.ok) {
             const data = await res.json();
             const myHabitId = `challenge_${data.challengeId}`;
+            
+            // Добавляем привычку
             habits.push({
                 id:            myHabitId,
                 name, icon, count, unit,
@@ -1004,6 +1020,7 @@ async function saveChallenge() {
             });
             lsSet('habits', habits);
 
+            // Добавляем вызов
             challenges.push({
                 id:             data.challengeId,
                 habitId:        myHabitId,
@@ -1024,7 +1041,12 @@ async function saveChallenge() {
             lsSet('challenges', challenges);
 
             closeChallengeModal();
-            renderChallenges();
+            
+            // ✅ ИСПРАВЛЕНИЕ: рендерим обе вкладки
+            renderChallenges();        // вкладка Друзья → Вызовы
+            renderChallengeHabits();   // вкладка Главная → ⚡ Вызовы
+            renderHabits();            // обновляем личные (на всякий случай)
+            
             syncWithServer();
             alert(`Вызов отправлен @${friend.username}! 🏆`);
         }
