@@ -1179,11 +1179,20 @@ function getChallengeProgress(challenge) {
 }
 
 function getDaysLeft(challenge) {
-    const start = new Date(challenge.startDate);
-    const end   = new Date(start);
-    end.setDate(start.getDate() + challenge.duration);
-    const today = new Date(); today.setHours(0,0,0,0);
-    return Math.max(0, Math.ceil((end - today) / (1000 * 60 * 60 * 24)));
+    if (!challenge.startDate || !challenge.duration) return 0;
+    // Парсим дату правильно, избегая проблем с часовым поясом
+    const parts = String(challenge.startDate).split('T')[0].split('-');
+    const start = new Date(
+        parseInt(parts[0]),
+        parseInt(parts[1]) - 1,
+        parseInt(parts[2])
+    );
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + parseInt(challenge.duration));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diff);
 }
 
 async function syncChallengeProgress() {
