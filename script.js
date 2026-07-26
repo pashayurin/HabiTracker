@@ -170,6 +170,7 @@ async function syncWithServer() {
                 username:   currentUser.username   || '',
                 habits:     habits   || [],
                 progress:   progress || {},
+                friends:    friends  || [],
                 timezone:   getUserTimezone()
             })
         });
@@ -183,8 +184,19 @@ async function syncWithServer() {
                 progress = data.progress;
                 lsSet('progress', progress);
             }
+            // Синхронизируем друзей
+            if (data.friends && data.friends.length > 0) {
+                // Мержим: добавляем серверных которых нет локально
+                for (const sf of data.friends) {
+                    if (!friends.find(f => String(f.id) === String(sf.id))) {
+                        friends.push(sf);
+                    }
+                }
+                lsSet('friends', friends);
+            }
             renderHabits();
             renderProfile();
+            renderFriendsList();
         }
     } catch(e) { console.log('Офлайн режим'); }
 }
