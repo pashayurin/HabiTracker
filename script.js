@@ -215,8 +215,18 @@ async function loadFromServer() {
                 progress = data.progress;
                 lsSet('progress', progress);
             }
+            // Загружаем друзей с сервера
+            if (data.friends && data.friends.length > 0) {
+                for (const sf of data.friends) {
+                    if (!friends.find(f => String(f.id) === String(sf.id))) {
+                        friends.push(sf);
+                    }
+                }
+                lsSet('friends', friends);
+            }
             renderHabits();
             renderProfile();
+            renderFriendsList();
         }
     } catch(e) { console.log('Не удалось загрузить с сервера'); }
 }
