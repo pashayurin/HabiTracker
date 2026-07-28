@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>HabiTracker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 
@@ -169,7 +169,11 @@
 
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
-                <input type="number" class="setting-input-num" id="habitCount" placeholder="1" min="1">
+                <div class="num-stepper">
+                    <button class="num-stepper-btn" onclick="changeHabitCount(-1)">−</button>
+                    <input type="number" class="setting-input-num" id="habitCount" value="1" min="1" readonly>
+                    <button class="num-stepper-btn" onclick="changeHabitCount(1)">+</button>
+                </div>
             </div>
             <div class="divider"></div>
 
@@ -336,7 +340,7 @@
     </div>
 </div>
 
-<script src="script.js?v=19"></script>
+<script src="script.js?v=20"></script>
 
 <main class="content page" id="page-friends">
     <div class="friends-header">
@@ -391,7 +395,11 @@
         <div class="settings-box">
             <div class="setting-row">
                 <span class="setting-label">количество в день</span>
-                <input type="number" class="setting-input-num" id="challengeHabitCount" placeholder="1" min="1">
+                <div class="num-stepper">
+                    <button class="num-stepper-btn" onclick="changeChallengeHabitCount(-1)">−</button>
+                    <input type="number" class="setting-input-num" id="challengeHabitCount" value="1" min="1" readonly>
+                    <button class="num-stepper-btn" onclick="changeChallengeHabitCount(1)">+</button>
+                </div>
             </div>
             <div class="divider"></div>
             <div class="setting-row">
