@@ -400,7 +400,7 @@ function openModal() {
     updateDateDisplay();
 
     document.getElementById('habitName').value  = '';
-    document.getElementById('habitCount').value = '';
+    document.getElementById('habitCount').value = '1';
     document.getElementById('habitUnit').value  = 'раз';
 
     selectedIconValue = '⭐';
@@ -1059,7 +1059,7 @@ function openChallengeModal() {
     challengeIconValue = '⭐';
     document.getElementById('challengeSelectedIcon').textContent = '⭐';
     document.getElementById('challengeHabitName').value  = '';
-    document.getElementById('challengeHabitCount').value = '';
+    document.getElementById('challengeHabitCount').value = '1';
     document.getElementById('challengeHabitUnit').value  = 'раз';
     document.getElementById('challengeIconPicker').classList.remove('open');
     challengeIconPickerOpen = false;
@@ -1614,4 +1614,17 @@ async function addProgressChallengeById(challengeId, habitId, total) {
         await syncChallengeProgress();
         await syncWithServer();
     }
+}
+function changeHabitCount(dir) {
+    const input = document.getElementById('habitCount');
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, val + dir);
+    input.value = val;
+}
+
+function changeChallengeHabitCount(dir) {
+    const input = document.getElementById('challengeHabitCount');
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, val + dir);
+    input.value = val;
 }
