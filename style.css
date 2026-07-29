@@ -1446,51 +1446,50 @@ body {
 .custom-select-wrap {
     gap: 4px;
 }
-/* Строка "дата начала" — переносим блок с датой на новую строку, чтобы не вылезал за края */
-.date-start-row {
-    flex-wrap: wrap;
-    row-gap: 10px;
-    align-items: center;
+.date-start-block {
+    display: block !important;
+    padding: 12px 14px !important;
 }
-.date-start-row .setting-label {
-    width: 100%;
+.date-start-block .setting-label {
+    display: block !important;
+    margin-bottom: 10px !important;
+    font-size: 13px;
+    color: var(--text-muted);
 }
-
-.date-inputs {
-    display: flex;
-    width: 100%;
-    justify-content: flex-end;
-    gap: 6px;
-    flex-wrap: nowrap;
+.date-start-block .date-inputs {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
 }
-
-.custom-select-wrap {
-    display: flex;
-    align-items: center;
-    gap: 3px;
+.date-start-block .custom-select-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(108,99,255,0.25);
     border-radius: 8px;
-    padding: 3px 5px;
-    flex-shrink: 0;
+    padding: 4px 4px !important;
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+    min-width: 0 !important;
 }
-
-.date-value {
+.date-start-block .date-value {
     font-size: 12px;
     font-weight: 700;
     color: #F2F0FF;
-    min-width: 26px;
     text-align: center;
     white-space: nowrap;
+    overflow: hidden;
 }
-
-.date-arrow {
+.date-start-block .date-arrow {
     background: rgba(108,99,255,0.15);
     border: none;
     border-radius: 6px;
-    width: 18px;
-    height: 18px;
-    font-size: 13px;
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
     font-weight: 700;
     color: #A78BFF;
     cursor: pointer;
@@ -1501,15 +1500,8 @@ body {
     line-height: 1;
     flex-shrink: 0;
     touch-action: manipulation;
-    transition: all 0.15s;
 }
-.date-arrow:active {
+.date-start-block .date-arrow:active {
     background: var(--primary);
     color: #fff;
-    transform: scale(0.85);
-}
-
-/* Для года нужно чуть больше места (4 цифры) */
-#startYear {
-    min-width: 34px;
 }
